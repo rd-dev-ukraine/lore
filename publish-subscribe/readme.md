@@ -262,3 +262,10 @@ Since pub-sub pattern is cool it have some restrictions and disadvantages:
   
   If performance is important consider manual routing. 
   Here is also no common ways to solve this because subscribers separation is pretty application-specific.
+  
+  ## Make our own
+  
+  In this chapter we will write our own `EventBus` implementation for JavaScript. 
+  The most libs publishes and subscribes to messages by name, our will do this way too, but with some extra syntax sugar.
+  
+  Example will use ES6, but could be easy compiled to ES5 with Babel.  
