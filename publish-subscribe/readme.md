@@ -199,10 +199,66 @@ Publish-subscribe pattern could be good choice for communicating between applica
   Below we build an `EventBus` class which automates boilerplate code for subscription and publishing. 
   
   
-  ### Disadvantages
+### Disadvantages
   
-  Since pub-sub pattern is cool it have some restrictions and disadvantages:
+Since pub-sub pattern is cool it have some restrictions and disadvantages:
   
-  * Decoupling. 
-    Yes, there is two sides of coin. 
-    Dependency tree in application becomes non-explicit.  
+* Decoupling. 
+  Yes, there is two sides of coin. 
+  Dependency tree in application becomes non-explicit. 
+  While getting what messages class handles is easy, it is pretty hard to get who emits those messages.
+  So inspecting data flows could be hard task.
+  In big application there can be a mess.
+  
+  It is recommended to use constant classes for command names, 
+  possible with nesting to split commands by application areas. 
+  For big application modules with independent set of commands use several command objects.
+  
+  ```javascript
+  // product-commands.js
+  export const ProductCommands = {
+      ProductList: {
+          SearchProduct: "ProductCommands.ProductList.Search",
+          ProductListDataLoaded: "ProductCommands.ProductList.ProductListDataLoaded"
+      },
+      ProductEdit: {
+          SaveProduct: "ProductCommands.ProductEdit.SaveProduct"
+      }
+  };
+  
+  // user-commands.js 
+  export const UserCommands = {
+      UserList: {
+          ...
+      },
+      UserEdit: {
+          ...
+      }
+  };
+  ```
+ 
+* No command separation. 
+  Each part of application can send any message.
+  There is no restriction on this.
+  It is hard to guarantee the application part sends only messages it allowed to send.
+  
+  This issue is hard to address and avoid. 
+  If you're using string constants for message names nobody can prevent developer 
+  from entering the same string manually and break all encapsulation.
+  You could use some hand-made techniques like message namespacing, 
+  using non-string message identifiers etc. but there is no common way for this.
+  In most cases code review would be enough.
+  
+* Performance. 
+  It could be complex to use this pattern if there are thousands of subscribers in the system.
+  Especially if message addresses to only one of them.
+  Every subscriber would be notified and must reject foreign message by itself.
+  This leads to thousands of unnecessary method calls.
+  
+  There are ways to work around this 
+  (like introducing `Recipient ID`-like fields both for the message and for subscriber,
+   named channels, advanced message routing etc.)
+  but there is no silver bullet in this.
+  
+  If performance is important consider manual routing. 
+  Here is also no common ways to solve this because subscribers separation is pretty application-specific.
