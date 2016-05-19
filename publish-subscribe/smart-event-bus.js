@@ -5,7 +5,7 @@ class SmartEventBus {
         this.handlers = {};
     }
 
-    /** Registers callback for processing message. */
+    /** Registers callback for processing message with specified name. */
     subscribe(message, callback) {
         if (!message) {
             throw "Message is null or empty or not defined.";
@@ -19,7 +19,7 @@ class SmartEventBus {
         this.handlers[message].push(callback);
     }
 
-    /** Removes callback from processing message. */
+    /** Removes callback for processing message. */
     unsubscribe(message, callback) {
         if (!message) {
             throw "Message is null or empty or not defined.";
@@ -39,6 +39,10 @@ class SmartEventBus {
         }
     }
 
+    /** 
+     * Publishes message with specified name and data. 
+     * Executes all registered callbacks for message with the same name using data as argument. 
+     */
     publish(message, data) {
         if (!message) {
             throw "Message is null or empty or not defined.";
@@ -62,7 +66,7 @@ class SmartEventBus {
      * Each method started with on<MessageName> will be registered as subscriber for MessageName.
      * Each method started with publish<MessageName> will be replaced with method which publishes MessageName on call.
      * 
-     * Methods are searched 
+     * Methods are searched either in object and in all prototypes.
      */
     register(object) {
         if (object === null || object === undefined) {
@@ -72,6 +76,10 @@ class SmartEventBus {
         Object.keys(this.getProps(object))
             .forEach(prop => {
                 let val = object[prop];
+
+                if (val === null || val === undefined) {
+                    return;
+                }
 
                 if (typeof val !== "function") {
                     return;
