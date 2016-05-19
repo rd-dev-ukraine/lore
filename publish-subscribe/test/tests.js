@@ -35,6 +35,32 @@ describe("SmartEvenBus", () => {
         const actualMessage = {
             text: "Hello"
         };
+        
+        it("should add handler for all onXXX methods", () => {
+            var callCount = 0;
+
+            const TestObject = class {
+                onData(message) {
+                    expect(message).to.equal(actualMessage);
+                    callCount++;
+                }
+                
+                onInfo(message) {
+                    expect(message).to.equal(actualMessage);
+                    callCount++;
+                }
+            }
+
+            let object = new TestObject();
+
+            const eventBus = new SmartEventBus();
+            eventBus.register(object);
+
+            eventBus.publish("Data", actualMessage);
+            eventBus.publish("Info", actualMessage);
+
+            expect(callCount).to.equal(2);
+        });
 
         it("should add handler for onXXX methods for object literal", () => {
             var callCount = 0;
@@ -98,6 +124,49 @@ describe("SmartEvenBus", () => {
             }
 
             let object = new TestObject();
+
+            const eventBus = new SmartEventBus();
+            eventBus.register(object);
+
+            eventBus.publish("Data", actualMessage);
+
+            expect(callCount).to.equal(1);
+        });
+
+        it("should add handler for onXXX methods for ES6 class literals", () => {
+            var callCount = 0;
+
+            const TestObject = class {
+                onData(message) {
+                    expect(message).to.equal(actualMessage);
+                    callCount++;
+                }
+            }
+
+            let object = new TestObject();
+
+            const eventBus = new SmartEventBus();
+            eventBus.register(object);
+
+            eventBus.publish("Data", actualMessage);
+
+            expect(callCount).to.equal(1);
+        });
+
+        it("should add handler for onXXX methods for ES6 inherited classes", () => {
+            var callCount = 0;
+
+            class TestObject {
+                onData(message) {
+                    expect(message).to.equal(actualMessage);
+                    callCount++;
+                }
+            }
+            
+            class ExtraTestObject extends TestObject {                
+            }
+
+            let object = new ExtraTestObject();
 
             const eventBus = new SmartEventBus();
             eventBus.register(object);

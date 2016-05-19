@@ -69,27 +69,44 @@ class SmartEventBus {
             throw "Object is null or undefined.";
         }
 
-        for (let prop in object) {
-            let val = object[prop];
-            
-            if (typeof val !== "function") {
-                continue;
-            }
-            
-            if (prop.startsWith("on")) {
-                const messageName = prop.substring(2);
-                this.subscribe(messageName, data => {
-                    object[prop].call(object, data);
-                });
-            }
+        Object.keys(this.getProps(object))
+            .forEach(prop => {
+                let val = object[prop];
 
-            if (prop.startsWith("publish")) {
-                const messageName = prop.substring(7);
-                object[prop] = (data) => {
-                    this.publish(messageName, data);
-                };
-            }
+                if (typeof val !== "function") {
+                    return;
+                }
+
+                if (prop.startsWith("on")) {
+                    const messageName = prop.substring(2);
+                    this.subscribe(messageName, data => {
+                        object[prop].call(object, data);
+                    });
+                }
+
+                if (prop.startsWith("publish")) {
+                    const messageName = prop.substring(7);
+                    object[prop] = (data) => {
+                        this.publish(messageName, data);
+                    };
+                }
+            });
+    }
+
+    getProps(object) {
+        let hash = Object.getOwnPropertyNames(object)
+            .filter(prop => prop !== "constructor")
+            .reduce((hash, prop) => {
+                hash[prop] = prop;
+                return hash;
+            }, {});
+
+        let prototype = Object.getPrototypeOf(object);
+        if (prototype) {
+            hash = Object.assign(hash, this.getProps(prototype));
         }
+
+        return hash;
     }
 }
 
