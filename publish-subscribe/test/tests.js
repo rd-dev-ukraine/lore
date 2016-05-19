@@ -35,7 +35,7 @@ describe("SmartEvenBus", () => {
         const actualMessage = {
             text: "Hello"
         };
-        
+
         it("should add handler for all onXXX methods", () => {
             var callCount = 0;
 
@@ -44,7 +44,7 @@ describe("SmartEvenBus", () => {
                     expect(message).to.equal(actualMessage);
                     callCount++;
                 }
-                
+
                 onInfo(message) {
                     expect(message).to.equal(actualMessage);
                     callCount++;
@@ -162,8 +162,8 @@ describe("SmartEvenBus", () => {
                     callCount++;
                 }
             }
-            
-            class ExtraTestObject extends TestObject {                
+
+            class ExtraTestObject extends TestObject {
             }
 
             let object = new ExtraTestObject();
@@ -176,5 +176,34 @@ describe("SmartEvenBus", () => {
             expect(callCount).to.equal(1);
         });
 
+    });
+
+    describe("register", () => {
+        const message = {
+            text: "Hello world"
+        };
+        
+        it("should add publishXXX method", () => {
+            class Test {                
+                /** Stub for publishing message method */
+                publishData(message) { }
+            }
+            
+            let test = new Test();
+            
+            const eventBus = new SmartEventBus();
+            eventBus.register(test);
+            
+            var callCount = 0;
+            
+            eventBus.subscribe("Data", (data) => {
+                callCount++;
+                expect(data).to.equal(message);
+            });
+            
+            test.publishData(message);
+            
+            expect(callCount).to.equal(1);
+        });
     });
 });
