@@ -61,29 +61,35 @@ class SmartEventBus {
      * Register subscribers and publishers for object methods.
      * Each method started with on<MessageName> will be registered as subscriber for MessageName.
      * Each method started with publish<MessageName> will be replaced with method which publishes MessageName on call.
+     * 
+     * Methods are searched 
      */
     register(object) {
         if (object === null || object === undefined) {
             throw "Object is null or undefined.";
         }
 
-        Object.keys(object)
-            .filter(prop => prop.startsWith("on") || prop.startsWith("publish"))
-            .forEach(prop => {
-                if (prop.startsWith("on")) {
-                    const messageName = prop.substring(2);
-                    this.subscribe(messageName, data => {
-                        object[prop].call(object, data);
-                    });
-                }
+        for (let prop in object) {
+            let val = object[prop];
+            
+            if (typeof val !== "function") {
+                continue;
+            }
+            
+            if (prop.startsWith("on")) {
+                const messageName = prop.substring(2);
+                this.subscribe(messageName, data => {
+                    object[prop].call(object, data);
+                });
+            }
 
-                if (prop.startsWith("publish")) {
-                    const messageName = prop.substring(7);
-                    object[prop] = (data) => {
-                        this.publish(messageName, data);
-                    };
-                }
-            });
+            if (prop.startsWith("publish")) {
+                const messageName = prop.substring(7);
+                object[prop] = (data) => {
+                    this.publish(messageName, data);
+                };
+            }
+        }
     }
 }
 

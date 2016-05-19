@@ -29,29 +29,83 @@ describe("SmartEvenBus", () => {
             expect(callCount).to.equal(2);
         });
     });
-    
+
     describe("register", () => {
-        
+
+        const actualMessage = {
+            text: "Hello"
+        };
+
         it("should add handler for onXXX methods for object literal", () => {
             var callCount = 0;
-            const actualMessage = {
-                text: "Hello"
-            };
-            
+
             let object = {
                 onData(message) {
                     expect(message).to.equal(actualMessage);
                     callCount++;
                 }
             };
-            
+
             const eventBus = new SmartEventBus();
             eventBus.register(object);
-            
+
             eventBus.publish("Data", actualMessage);
-            
+
             expect(callCount).to.equal(1);
-        });        
-        
+        });
+
+        it("should not add handler for non-function members", () => {
+            var callCount = 0;
+
+            let object = {
+                onData: "function"
+            };
+
+            const eventBus = new SmartEventBus();
+            eventBus.register(object);
+
+            expect(eventBus.handlers["Data"]).is.undefined;
+        });
+
+        it("should add handler for onXXX methods for prototype classes", () => {
+            var callCount = 0;
+
+            function TestObject() { };
+
+            TestObject.prototype.onData = function (message) {
+                expect(message).to.equal(actualMessage);
+                callCount++;
+            };
+
+            let object = new TestObject();
+
+            const eventBus = new SmartEventBus();
+            eventBus.register(object);
+
+            eventBus.publish("Data", actualMessage);
+
+            expect(callCount).to.equal(1);
+        });
+
+        it("should add handler for onXXX methods for ES6 classes", () => {
+            var callCount = 0;
+
+            class TestObject {
+                onData(message) {
+                    expect(message).to.equal(actualMessage);
+                    callCount++;
+                }
+            }
+
+            let object = new TestObject();
+
+            const eventBus = new SmartEventBus();
+            eventBus.register(object);
+
+            eventBus.publish("Data", actualMessage);
+
+            expect(callCount).to.equal(1);
+        });
+
     });
 });
