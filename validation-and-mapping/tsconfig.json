@@ -4,9 +4,9 @@
         "target": "es5",
         "noImplicitAny": false,
         "sourceMap": true,
-        "outDir": "./out"
+        "outDir": "./out"        
     },
-    "exclude": [
-        "node_modules"
-    ]    
+    "include": [
+        "./test/tests.ts"
+    ]
 }
