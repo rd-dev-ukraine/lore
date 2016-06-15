@@ -62,8 +62,8 @@ var NumberRules = (function (_super) {
         };
     };
     NumberRules.mustRule = function (predicate, errorMessage) {
-        return function (value, reportError) {
-            if (!predicate(value)) {
+        return function (value, reportError, entity, rootEntity) {
+            if (!predicate(value, entity, rootEntity)) {
                 reportError(errorMessage);
             }
             return value;

@@ -11,8 +11,8 @@ var validator = (function () {
     }
     validator.run = function (value, validator) {
         var errorAccumulator = new error_accumulator_1.default();
-        var context = new validation_context_1.default("", errorAccumulator);
-        var result = validator.run(value, context);
+        var validationContext = new validation_context_1.default("", errorAccumulator);
+        var result = validator.run(value, validationContext, value, value);
         var errors = errorAccumulator.errors();
         if (Object.keys(errors).length) {
             return {

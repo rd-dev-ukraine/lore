@@ -50,7 +50,7 @@ class NumberRules extends ChainableRuleRunner<number> {
         super(rules);
     }
 
-    must(predicate: (value: number) => boolean, errorMessage: string = "Value is invalid"): NumberRules {
+    must(predicate: (value: number, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): NumberRules {
         return new NumberRules([...this.rules, NumberRules.mustRule(predicate, errorMessage)]);
     }
 
@@ -69,9 +69,9 @@ class NumberRules extends ChainableRuleRunner<number> {
         };
     }
 
-    static mustRule(predicate: (value: number) => boolean, errorMessage: string): IValidationTransform<number, number> {
-        return (value, reportError: ReportErrorFunction) => {
-            if (!predicate(value)) {
+    static mustRule(predicate: (value: number, entity?: any, rootEntity?: any) => boolean, errorMessage: string): IValidationTransform<number, number> {
+        return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
+            if (!predicate(value, entity, rootEntity)) {
                 reportError(errorMessage);
             }
 

@@ -8,9 +8,9 @@ export * from "./primitive-types";
 export class validator {
     static run<TIn, TOut>(value: TIn, validator: IValidationRule<TIn, TOut>): ValidationResult<TOut> {
         const errorAccumulator = new ErrorAccumulator();
-        const context = new ValidationContext("", errorAccumulator);
+        const validationContext = new ValidationContext("", errorAccumulator);
 
-        const result = validator.run(value, context);
+        const result = validator.run(value, validationContext, value, value);
         const errors = errorAccumulator.errors();
 
         if (Object.keys(errors).length) {
