@@ -27,5 +27,17 @@ exports.default = function () {
             should(result.errors).be.undefined();
         });
     });
+    describe("for number", function () {
+        it("should validate if value is number", function () {
+            var numValue = 233.4;
+            var notNumValue = "2344.4";
+            var validResult = validator_1.validator.run(numValue, validator_1.num().must(function (v) { return v > 200 && v < 300; }));
+            validResult.valid.should.be.true();
+            validResult.value.should.equal(numValue);
+            var invalidResult = validator_1.validator.run(notNumValue, validator_1.num());
+            invalidResult.valid.should.be.false();
+            invalidResult.value.should.equal(2344.4);
+        });
+    });
 };
 //# sourceMappingURL=primitive-types-validator-test.js.map

@@ -1,7 +1,7 @@
 /// <reference path="../validator/validator.d.ts" />
 import * as should from "should";
 
-import { validator, str } from "../validator/validator";
+import { validator, str, num } from "../validator/validator";
 
 export default () => {
     describe("for string", () => {
@@ -29,6 +29,22 @@ export default () => {
             result.valid.should.be.true();
             result.value.should.equal("23234");
             should( result.errors).be.undefined();
+        });
+    });
+
+    describe("for number", () => {
+        it("should validate if value is number", () => {
+            const numValue = 233.4;
+            const notNumValue = "2344.4";
+
+            const validResult = validator.run(numValue, num().must(v => v > 200 && v < 300));
+
+            validResult.valid.should.be.true();
+            validResult.value.should.equal(numValue);
+
+            const invalidResult = validator.run(notNumValue, num());
+            invalidResult.valid.should.be.false();
+            invalidResult.value.should.equal(2344.4);
         });
     });
 };
