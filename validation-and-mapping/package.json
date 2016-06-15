@@ -1,0 +1,15 @@
+{
+  "name": "validation-and-mapping",
+  "version": "1.0.0",
+  "description": "Validation and conversion tool for javascript",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./out/tests.js"
+  },
+  "author": "Sergey Tokarev",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "mocha": "^2.5.3"
+  }
+}
