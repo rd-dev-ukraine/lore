@@ -1,1 +1,1 @@
-{"version":3,"file":"structural-type-rules.js","sourceRoot":"","sources":["../../../validator/rules/structural-type-rules.ts"],"names":[],"mappings":";AAOA,aAA+B,MAA+B;IAC1D,MAAM,IAAI,KAAK,EAAE,CAAC;AACtB,CAAC;AAFe,WAAG,MAElB,CAAA"}
+{"version":3,"file":"structural-type-rules.js","sourceRoot":"","sources":["../../../validator/rules/structural-type-rules.ts"],"names":[],"mappings":";AAOA;;GAEG;AACH,aAA+B,MAA+B;IAC1D,MAAM,IAAI,KAAK,EAAE,CAAC;AACtB,CAAC;AAFe,WAAG,MAElB,CAAA"}

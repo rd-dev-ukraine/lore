@@ -11,7 +11,7 @@ export interface IValidationRule<TIn, TOut> {
      * param @entity The entity which properties are currently validated, may be the nested into root entity.
      * param @root The root entity passed to validator.run method.
      */
-    run(value: TIn, validationContext: ValidationContext, entity: any, root: any) : TOut;
+    run(value: TIn, validationContext: ValidationContext, entity: any, root: any): TOut;
 }
 
 
@@ -28,6 +28,10 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
         return this;
     }
 
+    required(errorMessage: string = "Value is required"): this {
+        return this.withRule(ChainableRuleRunner.requiredRule(errorMessage));
+    }
+
     static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): IValidationTransform<TIn, TOut> {
         return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
             if (!predicate(value, entity, rootEntity)) {
@@ -36,5 +40,15 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
 
             return value;
         };
+    }
+
+    static requiredRule<TIn, TOut>(errorMessage: string): IValidationTransform<TIn, TOut> {
+        return (value, reportError: ReportErrorFunction) => {
+            if (value === null || value === undefined) {
+                reportError(errorMessage);
+            }
+
+            return value;
+        }
     }
 }

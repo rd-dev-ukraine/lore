@@ -1,4 +1,7 @@
 "use strict";
+/**
+ *
+ */
 function obj(struct) {
     throw new Error();
 }
