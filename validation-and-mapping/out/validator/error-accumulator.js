@@ -16,5 +16,6 @@ var ErrorAccumulator = (function () {
     };
     return ErrorAccumulator;
 }());
-exports.ErrorAccumulator = ErrorAccumulator;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = ErrorAccumulator;
 //# sourceMappingURL=error-accumulator.js.map

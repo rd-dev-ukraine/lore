@@ -4,12 +4,13 @@
   "description": "Validation and conversion tool for javascript",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./out/tests.js"
+    "test": "mocha ./out/test/tests.js"
   },
   "author": "Sergey Tokarev",
   "license": "MIT",
   "private": true,
   "devDependencies": {
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "should": "^9.0.2"
   }
 }

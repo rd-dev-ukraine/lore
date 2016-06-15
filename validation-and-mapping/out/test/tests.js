@@ -1,9 +1,4 @@
 "use strict";
-var value_validators_test_1 = require("./value-validators-test");
-describe("Value validators test", value_validators_test_1.default);
-describe("Test", function () {
-    it("should run", function () {
-        console.log("Test run successfuly");
-    });
-});
+var primitive_types_validator_test_1 = require("./primitive-types-validator-test");
+describe("Primitive values validator", primitive_types_validator_test_1.default);
 //# sourceMappingURL=tests.js.map
