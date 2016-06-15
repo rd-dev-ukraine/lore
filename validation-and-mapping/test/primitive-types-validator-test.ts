@@ -12,11 +12,17 @@ export default () => {
             should(result.value).be.equal("213");
         });
 
-        it("should error if value is not string", () => {
-            const result = validator.run(213, str());
+        it("should error if value is not string and conversion disabled", () => {
+            const result = validator.run(213, str("Value is not a valid string", false));
             result.valid.should.be.false();
             result.errors.should.keys("");
         });
+
+        it("should be ok if value is not string and conversion enabled", () => {
+            const result = validator.run(213, str());
+            result.valid.should.be.true();
+        });
+
 
         it("should run chained validators", () => {
             const result = validator.run("", str().notEmpty());
@@ -35,16 +41,21 @@ export default () => {
     describe("for number", () => {
         it("should validate if value is number", () => {
             const numValue = 233.4;
-            const notNumValue = "2344.4";
 
             const validResult = validator.run(numValue, num().must(v => v > 200 && v < 300));
 
             validResult.valid.should.be.true();
             validResult.value.should.equal(numValue);
 
-            const invalidResult = validator.run(notNumValue, num());
+            const convertibleValue = "2344.4";
+            const validConvertedResult = validator.run(convertibleValue, num());
+            validConvertedResult.valid.should.be.true();
+            validConvertedResult.value.should.equal(2344.4);
+
+            const notConvertibleValue = "sdfsdf";
+            const invalidResult = validator.run(notConvertibleValue, num());
             invalidResult.valid.should.be.false();
-            invalidResult.value.should.equal(2344.4);
+            invalidResult.value.should.be.NaN();
         });
     });
 };

@@ -1,4 +1,4 @@
-/// <reference path="./validator.d.ts" />
+/// <reference path="../validator.d.ts" />
 "use strict";
 var ChainableRuleRunner = (function () {
     function ChainableRuleRunner() {

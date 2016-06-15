@@ -1,9 +1,10 @@
 /// <reference path="./validator.d.ts" />
 import ErrorAccumulator from "./error-accumulator";
 import ValidationContext from "./validation-context";
-import { IValidationRule } from "./rules";
+import { IValidationRule } from "./rules/rules";
 
-export * from "./primitive-types";
+export * from "./rules/primitive-type-rules";
+export * from "./rules/structural-type-rules";
 
 export class validator {
     static run<TIn, TOut>(value: TIn, validator: IValidationRule<TIn, TOut>): ValidationResult<TOut> {

@@ -5,7 +5,8 @@ function __export(m) {
 /// <reference path="./validator.d.ts" />
 var error_accumulator_1 = require("./error-accumulator");
 var validation_context_1 = require("./validation-context");
-__export(require("./primitive-types"));
+__export(require("./rules/primitive-type-rules"));
+__export(require("./rules/structural-type-rules"));
 var validator = (function () {
     function validator() {
     }

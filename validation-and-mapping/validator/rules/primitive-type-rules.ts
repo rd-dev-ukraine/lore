@@ -1,30 +1,6 @@
-/// <reference path="./validator.d.ts" />
-import ValidationContext from "./validation-context";
-import { IValidationRule } from "./rules";
+/// <reference path="../validator.d.ts" />
 
-abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, TOut> {
-    rules: IValidationTransform<any, TOut>[] = [];
-
-    run(value: any, validationContext: ValidationContext): TOut {
-        return this.rules
-            .reduce((currentValue, rule) => rule(currentValue, err => validationContext.reportError(err)), value);
-    }
-
-    withRule(rule: IValidationTransform<any, TOut>): this {
-        this.rules.push(rule);
-        return this;
-    }
-
-    static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): IValidationTransform<TIn, TOut> {
-        return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
-            if (!predicate(value, entity, rootEntity)) {
-                reportError(errorMessage);
-            }
-
-            return value;
-        };
-    }
-}
+import { IValidationRule, ChainableRuleRunner } from "./rules";
 
 class StringRules extends ChainableRuleRunner<string> {
 
@@ -36,15 +12,15 @@ class StringRules extends ChainableRuleRunner<string> {
         return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
     }
 
-    static isStringRule(errorMessage: string): IValidationTransform<any, string> {
+    static isStringRule(errorMessage: string, convert: boolean): IValidationTransform<any, string> {
         return (value: any, reportError: ReportErrorFunction) => {
             if (value === null || value === undefined)
                 return value;
 
-            if (typeof value !== "string")
+            if (typeof value !== "string" && !convert)
                 reportError(errorMessage);
 
-            return value;
+            return value.toString();
         };
     }
 
@@ -71,8 +47,12 @@ class NumberRules extends ChainableRuleRunner<number> {
                 return value;
 
             if (typeof value !== "number") {
-                reportError(errorMessage);
-                return parseFloat("" + value);
+                const result = parseFloat("" + value);
+
+                if (isNaN(result))
+                    reportError(errorMessage);
+
+                return result;
             }
 
             return value;
@@ -80,8 +60,8 @@ class NumberRules extends ChainableRuleRunner<number> {
     }
 }
 
-export function str(errorMessage: string = "Value is not a string."): StringRules {
-    return new StringRules().withRule(StringRules.isStringRule(errorMessage));
+export function str(errorMessage: string = "Value is not a string.", convert: boolean = true): StringRules {
+    return new StringRules().withRule(StringRules.isStringRule(errorMessage, convert));
 }
 
 export function num(errorMessage: string = "Value is not a valid number"): NumberRules {
