@@ -2,24 +2,38 @@
 import ValidationContext from "./validation-context";
 import { IValidationRule } from "./rules";
 
-class ChainableRuleRunner<TOut> implements IValidationRule<any, TOut> {
-    constructor(public rules: IValidationTransform<any, string>[]) {
-    }
+abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, TOut> {
+    rules: IValidationTransform<any, TOut>[] = [];
 
     run(value: any, validationContext: ValidationContext): TOut {
         return this.rules
             .reduce((currentValue, rule) => rule(currentValue, err => validationContext.reportError(err)), value);
     }
+
+    withRule(rule: IValidationTransform<any, TOut>): this {
+        this.rules.push(rule);
+        return this;
+    }
+
+    static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): IValidationTransform<TIn, TOut> {
+        return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
+            if (!predicate(value, entity, rootEntity)) {
+                reportError(errorMessage);
+            }
+
+            return value;
+        };
+    }
 }
 
 class StringRules extends ChainableRuleRunner<string> {
 
-    constructor(rules: IValidationTransform<any, string>[]) {
-        super(rules);
+    notEmpty(errorMessage: string = "Value can not be empty"): this {
+        return this.withRule(StringRules.notEmtpyRule(errorMessage));
     }
 
-    notEmpty(errorMessage: string = "Value can not be empty"): StringRules {
-        return new StringRules([StringRules.notEmtpyRule(errorMessage), ...this.rules]);
+    must(predicate: (value: string, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
+        return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
     }
 
     static isStringRule(errorMessage: string): IValidationTransform<any, string> {
@@ -46,12 +60,8 @@ class StringRules extends ChainableRuleRunner<string> {
 
 class NumberRules extends ChainableRuleRunner<number> {
 
-    constructor(rules: IValidationTransform<any, number>[]) {
-        super(rules);
-    }
-
-    must(predicate: (value: number, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): NumberRules {
-        return new NumberRules([...this.rules, NumberRules.mustRule(predicate, errorMessage)]);
+    must(predicate: (value: number, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
+        return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
     }
 
 
@@ -68,23 +78,12 @@ class NumberRules extends ChainableRuleRunner<number> {
             return value;
         };
     }
-
-    static mustRule(predicate: (value: number, entity?: any, rootEntity?: any) => boolean, errorMessage: string): IValidationTransform<number, number> {
-        return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
-            if (!predicate(value, entity, rootEntity)) {
-                reportError(errorMessage);
-            }
-
-            return value;
-        };
-    }
-
 }
 
 export function str(errorMessage: string = "Value is not a string."): StringRules {
-    return new StringRules([StringRules.isStringRule(errorMessage)]);
+    return new StringRules().withRule(StringRules.isStringRule(errorMessage));
 }
 
-export function num(errorMessage: string = "Value is not a valid number") : NumberRules {
-    return new NumberRules([NumberRules.isNumberRule(errorMessage)]);
+export function num(errorMessage: string = "Value is not a valid number"): NumberRules {
+    return new NumberRules().withRule(NumberRules.isNumberRule(errorMessage));
 }
