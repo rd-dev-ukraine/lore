@@ -1,8 +1,7 @@
 /// <reference path="../validator/validator.d.ts" />
 import * as should from "should";
 
-import { str } from "../validator/primitive-types";
-import { validator } from "../validator/validator";
+import { validator, str } from "../validator/validator";
 
 export default () => {
     describe("for string", () => {

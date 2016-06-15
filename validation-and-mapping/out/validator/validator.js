@@ -1,7 +1,11 @@
 "use strict";
+function __export(m) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
 /// <reference path="./validator.d.ts" />
 var error_accumulator_1 = require("./error-accumulator");
 var validation_context_1 = require("./validation-context");
+__export(require("./primitive-types"));
 var validator = (function () {
     function validator() {
     }

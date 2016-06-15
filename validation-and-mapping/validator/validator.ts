@@ -3,6 +3,8 @@ import ErrorAccumulator from "./error-accumulator";
 import ValidationContext from "./validation-context";
 import { IValidationRule } from "./rules";
 
+export * from "./primitive-types";
+
 export class validator {
     static run<TIn, TOut>(value: TIn, validator: IValidationRule<TIn, TOut>): ValidationResult<TOut> {
         const errorAccumulator = new ErrorAccumulator();
