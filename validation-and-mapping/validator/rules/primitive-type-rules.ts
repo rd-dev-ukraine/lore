@@ -12,7 +12,7 @@ class StringRules extends ChainableRuleRunner<string> {
         return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
     }
 
-    static isStringRule(errorMessage: string, convert: boolean): IValidationTransform<any, string> {
+    static isStringRule(errorMessage: string, convert: boolean): ValidateAndTransformFunc<any, string> {
         return (value: any, reportError: ReportErrorFunction) => {
             if (value === null || value === undefined)
                 return value;
@@ -24,7 +24,7 @@ class StringRules extends ChainableRuleRunner<string> {
         };
     }
 
-    static notEmtpyRule(errorMessage: string): IValidationTransform<string, string> {
+    static notEmtpyRule(errorMessage: string): ValidateAndTransformFunc<string, string> {
         return (value: string, reportError: ReportErrorFunction) => {
             if (!value || !value.trim())
                 reportError(errorMessage);
@@ -41,7 +41,7 @@ class NumberRules extends ChainableRuleRunner<number> {
     }
 
 
-    static isNumberRule(errorMessage: string): IValidationTransform<any, number> {
+    static isNumberRule(errorMessage: string): ValidateAndTransformFunc<any, number> {
         return (value: any, reportError: ReportErrorFunction) => {
             if (value === null || value === undefined)
                 return value;

@@ -10,7 +10,7 @@ interface ValidationResult<TOut> {
 
 type ReportErrorFunction = (errorMessage: string) => void;
 
-interface IValidationTransform<TIn, TOut> {
+interface ValidateAndTransformFunc<TIn, TOut> {
     (value: TIn, reportError: ReportErrorFunction, entity?: any, rootEntity?: any): any;
 }
 

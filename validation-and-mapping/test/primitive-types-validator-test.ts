@@ -36,6 +36,18 @@ export default () => {
             result.value.should.equal("23234");
             should( result.errors).be.undefined();
         });
+
+        it("should pass if null string and no required rule", () => {
+            const result = validator.run(null, str());
+            result.valid.should.be.true();
+            should(result.value).be.null();
+        });
+
+        it("should false if null string and required rule included", () => {
+            const result = validator.run(null, str().required());
+            result.valid.should.be.false();
+            should(result.value).be.null();
+        });
     });
 
     describe("for number", () => {
@@ -56,6 +68,19 @@ export default () => {
             const invalidResult = validator.run(notConvertibleValue, num());
             invalidResult.valid.should.be.false();
             invalidResult.value.should.be.NaN();
+        });
+
+        
+        it("should pass if null value and no required rule", () => {
+            const result = validator.run(null, num());
+            result.valid.should.be.true();
+            should(result.value).be.null();
+        });
+
+        it("should false if null value and required rule included", () => {
+            const result = validator.run(null, num().required());
+            result.valid.should.be.false();
+            should(result.value).be.null();
         });
     });
 };

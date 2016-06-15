@@ -30,6 +30,16 @@ exports.default = function () {
             result.value.should.equal("23234");
             should(result.errors).be.undefined();
         });
+        it("should pass if null string and no required rule", function () {
+            var result = validator_1.validator.run(null, validator_1.str());
+            result.valid.should.be.true();
+            should(result.value).be.null();
+        });
+        it("should false if null string and required rule included", function () {
+            var result = validator_1.validator.run(null, validator_1.str().required());
+            result.valid.should.be.false();
+            should(result.value).be.null();
+        });
     });
     describe("for number", function () {
         it("should validate if value is number", function () {
@@ -45,6 +55,16 @@ exports.default = function () {
             var invalidResult = validator_1.validator.run(notConvertibleValue, validator_1.num());
             invalidResult.valid.should.be.false();
             invalidResult.value.should.be.NaN();
+        });
+        it("should pass if null value and no required rule", function () {
+            var result = validator_1.validator.run(null, validator_1.num());
+            result.valid.should.be.true();
+            should(result.value).be.null();
+        });
+        it("should false if null value and required rule included", function () {
+            var result = validator_1.validator.run(null, validator_1.num().required());
+            result.valid.should.be.false();
+            should(result.value).be.null();
         });
     });
 };

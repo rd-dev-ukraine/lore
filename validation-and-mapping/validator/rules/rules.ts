@@ -16,14 +16,14 @@ export interface IValidationRule<TIn, TOut> {
 
 
 export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, TOut> {
-    rules: IValidationTransform<any, TOut>[] = [];
+    rules: ValidateAndTransformFunc<any, TOut>[] = [];
 
     run(value: any, validationContext: ValidationContext): TOut {
         return this.rules
             .reduce((currentValue, rule) => rule(currentValue, err => validationContext.reportError(err)), value);
     }
 
-    withRule(rule: IValidationTransform<any, TOut>): this {
+    withRule(rule: ValidateAndTransformFunc<any, TOut>): this {
         this.rules.push(rule);
         return this;
     }
@@ -32,7 +32,7 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
         return this.withRule(ChainableRuleRunner.requiredRule(errorMessage));
     }
 
-    static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): IValidationTransform<TIn, TOut> {
+    static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
         return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
             if (!predicate(value, entity, rootEntity)) {
                 reportError(errorMessage);
@@ -42,7 +42,7 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
         };
     }
 
-    static requiredRule<TIn, TOut>(errorMessage: string): IValidationTransform<TIn, TOut> {
+    static requiredRule<TIn, TOut>(errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
         return (value, reportError: ReportErrorFunction) => {
             if (value === null || value === undefined) {
                 reportError(errorMessage);
