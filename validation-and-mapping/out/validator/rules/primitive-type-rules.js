@@ -5,7 +5,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var rules_1 = require("./rules");
+var rules_base_1 = require("./rules-base");
 var StringRules = (function (_super) {
     __extends(StringRules, _super);
     function StringRules() {
@@ -17,7 +17,7 @@ var StringRules = (function (_super) {
     };
     StringRules.prototype.must = function (predicate, errorMessage) {
         if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
-        return this.withRule(rules_1.ChainableRuleRunner.mustRule(predicate, errorMessage));
+        return this.withRule(rules_base_1.ChainableRuleRunner.mustRule(predicate, errorMessage));
     };
     StringRules.isStringRule = function (errorMessage, convert) {
         return function (value, reportError) {
@@ -36,7 +36,7 @@ var StringRules = (function (_super) {
         };
     };
     return StringRules;
-}(rules_1.ChainableRuleRunner));
+}(rules_base_1.ChainableRuleRunner));
 var NumberRules = (function (_super) {
     __extends(NumberRules, _super);
     function NumberRules() {
@@ -44,7 +44,7 @@ var NumberRules = (function (_super) {
     }
     NumberRules.prototype.must = function (predicate, errorMessage) {
         if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
-        return this.withRule(rules_1.ChainableRuleRunner.mustRule(predicate, errorMessage));
+        return this.withRule(rules_base_1.ChainableRuleRunner.mustRule(predicate, errorMessage));
     };
     NumberRules.isNumberRule = function (errorMessage) {
         return function (value, reportError) {
@@ -60,7 +60,7 @@ var NumberRules = (function (_super) {
         };
     };
     return NumberRules;
-}(rules_1.ChainableRuleRunner));
+}(rules_base_1.ChainableRuleRunner));
 function str(errorMessage, convert) {
     if (errorMessage === void 0) { errorMessage = "Value is not a string."; }
     if (convert === void 0) { convert = true; }

@@ -1,4 +1,4 @@
-/// <reference path="./validator.d.ts" />
+/// <reference path="../validator.d.ts" />
 "use strict";
 var ChainableRuleRunner = (function () {
     function ChainableRuleRunner() {
@@ -12,6 +12,10 @@ var ChainableRuleRunner = (function () {
         this.rules.push(rule);
         return this;
     };
+    ChainableRuleRunner.prototype.required = function (errorMessage) {
+        if (errorMessage === void 0) { errorMessage = "Value is required"; }
+        return this.withRule(ChainableRuleRunner.requiredRule(errorMessage));
+    };
     ChainableRuleRunner.mustRule = function (predicate, errorMessage) {
         return function (value, reportError, entity, rootEntity) {
             if (!predicate(value, entity, rootEntity)) {
@@ -20,7 +24,15 @@ var ChainableRuleRunner = (function () {
             return value;
         };
     };
+    ChainableRuleRunner.requiredRule = function (errorMessage) {
+        return function (value, reportError) {
+            if (value === null || value === undefined) {
+                reportError(errorMessage);
+            }
+            return value;
+        };
+    };
     return ChainableRuleRunner;
 }());
 exports.ChainableRuleRunner = ChainableRuleRunner;
-//# sourceMappingURL=rules.js.map
+//# sourceMappingURL=rules-base.js.map

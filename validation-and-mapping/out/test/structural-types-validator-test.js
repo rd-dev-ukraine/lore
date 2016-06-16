@@ -1,7 +1,7 @@
 "use strict";
 /// <reference path="../validator/validator.d.ts" />
 var should = require("should");
-var validator_1 = require("../validator/validator");
+var validator_1 = require("../validator");
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = function () {
     describe("for object with flat structure", function () {
@@ -17,7 +17,7 @@ exports.default = function () {
                 title: "test",
                 price: 23
             };
-            var result = validator_1.validator.run(test, objectStructure);
+            var result = validator_1.validate(test, objectStructure);
             result.valid.should.be.true();
         });
         it("should not put extra properties in result", function () {
@@ -27,7 +27,7 @@ exports.default = function () {
                 price: 23,
                 delivery: 233
             };
-            var result = validator_1.validator.run(test, objectStructure);
+            var result = validator_1.validate(test, objectStructure);
             result.valid.should.be.true();
             should(result["delivery"]).be.undefined();
         });
@@ -37,7 +37,7 @@ exports.default = function () {
                 title: "test",
                 price: -23
             };
-            var result = validator_1.validator.run(test, objectStructure);
+            var result = validator_1.validate(test, objectStructure);
             result.valid.should.be.false();
             Object.keys(result.errors).length.should.equal(2);
             result.errors["id"].length.should.equal(1);

@@ -1,7 +1,7 @@
 /// <reference path="../validator/validator.d.ts" />
 import * as should from "should";
 
-import { validator, obj, str, num } from "../validator/validator";
+import { validate, obj, str, num } from "../validator";
 
 export default () => {
     describe("for object with flat structure", () => {
@@ -19,7 +19,7 @@ export default () => {
                 price: 23
             };
 
-            const result = validator.run(test, objectStructure);
+            const result = validate(test, objectStructure);
             result.valid.should.be.true();
         });
 
@@ -31,7 +31,7 @@ export default () => {
                 delivery: 233
             };
 
-            const result = validator.run(test, objectStructure);
+            const result = validate(test, objectStructure);
             result.valid.should.be.true();
 
             should(result["delivery"]).be.undefined();
@@ -44,7 +44,7 @@ export default () => {
                 price: -23
             };
 
-            const result = validator.run(test, objectStructure);
+            const result = validate(test, objectStructure);
             result.valid.should.be.false();
             Object.keys(result.errors).length.should.equal(2);
             result.errors["id"].length.should.equal(1);

@@ -1,6 +1,6 @@
 /// <reference path="../validator.d.ts" />
 
-import { IValidationRule, ChainableRuleRunner } from "./rules";
+import { ChainableRuleRunner } from "./rules-base";
 
 class StringRules extends ChainableRuleRunner<string> {
 

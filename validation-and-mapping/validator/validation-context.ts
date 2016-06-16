@@ -2,7 +2,7 @@
 
 import ErrorAccumulator from "./error-accumulator";
 
-export default class ValidationContext {
+export default class ValidationContext implements IValidationContext {
     constructor(
         public path: string,
         private errorAccumulator: ErrorAccumulator) {
