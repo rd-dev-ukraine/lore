@@ -10,6 +10,9 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
     private keyFilteringFunction: (key: any) => boolean;
     private skipInvalid = false;
 
+    private mustPredicate: (value: IHash<TInElement>, entity?: any, rootEntity?: any) => boolean;
+    private mustErrorMessage: string;
+
     constructor(
         private elementValidationRule: IValidationRule<TInElement, TOutElement>,
         private passNullObject: boolean,
@@ -25,6 +28,12 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
         if (value === null || value === undefined) {
             if (!this.passNullObject)
                 validationContext.reportError(this.nullObjectErrorMessage);
+
+            return <IHash<TOutElement>><any>value;
+        }
+
+        if (this.mustPredicate && !this.mustPredicate(value, entity, root)) {
+            validationContext.reportError(this.mustErrorMessage);
 
             return <IHash<TOutElement>><any>value;
         }
@@ -47,6 +56,18 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
         }
 
         return <IHash<TOutElement>><any>result;
+    }
+
+    must(predicate: (value: IHash<TInElement>, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
+        if (!predicate)
+            throw new Error("predicate is required");
+        if (!errorMessage)
+            throw new Error("Error message is required");
+
+        this.mustPredicate = predicate;
+        this.mustErrorMessage = errorMessage;
+
+        return this;
     }
 
     filterKeys(predicate: (key: any) => boolean): this {

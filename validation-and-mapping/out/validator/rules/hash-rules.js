@@ -18,6 +18,10 @@ var HashValidationRule = (function () {
                 validationContext.reportError(this.nullObjectErrorMessage);
             return value;
         }
+        if (this.mustPredicate && !this.mustPredicate(value, entity, root)) {
+            validationContext.reportError(this.mustErrorMessage);
+            return value;
+        }
         var result = {};
         var _loop_1 = function(key) {
             if (this_1.keyFilteringFunction && !this_1.keyFilteringFunction(key))
@@ -37,6 +41,16 @@ var HashValidationRule = (function () {
             if (state_1 === "continue") continue;
         }
         return result;
+    };
+    HashValidationRule.prototype.must = function (predicate, errorMessage) {
+        if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
+        if (!predicate)
+            throw new Error("predicate is required");
+        if (!errorMessage)
+            throw new Error("Error message is required");
+        this.mustPredicate = predicate;
+        this.mustErrorMessage = errorMessage;
+        return this;
     };
     HashValidationRule.prototype.filterKeys = function (predicate) {
         this.keyFilteringFunction = predicate;
