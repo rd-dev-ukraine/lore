@@ -106,4 +106,4 @@ function optionalExpandableObject(struct) {
     return new ExpandableObjectValidationRule(struct, true);
 }
 exports.optionalExpandableObject = optionalExpandableObject;
-//# sourceMappingURL=structural-type-rules.js.map
+//# sourceMappingURL=object-rules.js.map
