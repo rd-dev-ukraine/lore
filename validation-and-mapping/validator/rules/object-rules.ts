@@ -1,8 +1,6 @@
 /// <reference path="../validator.d.ts" />
 import ValidationContext from "../validation-context";
 
-import { ChainableRuleRunner } from "./rules-base";
-
 export interface IPropertyValidationHash {
     [property: string]: IValidationRule<any, any>;
 }
