@@ -5,5 +5,6 @@ function __export(m) {
 __export(require("./primitive-type-rules"));
 __export(require("./object-rules"));
 __export(require("./hash-rules"));
+__export(require("./array-rules"));
 __export(require("./rules-base"));
 //# sourceMappingURL=index.js.map
