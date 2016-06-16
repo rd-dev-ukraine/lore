@@ -49,7 +49,7 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
         return <IHash<TOutElement>><any>result;
     }
 
-    filterKeys(predicate: (key: any) => boolean): HashValidationRule<TInElement, TOutElement> {
+    filterKeys(predicate: (key: any) => boolean): this {
         this.keyFilteringFunction = predicate;
 
         return this;
