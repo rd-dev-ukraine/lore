@@ -1,7 +1,7 @@
 /// <reference path="../validator/validator.d.ts" />
 import * as should from "should";
 
-import { validate, obj, objOptional, str, num } from "../validator";
+import { validate, obj, objOptional, str, num, expandableObject, optionalExpandableObject } from "../validator";
 
 export default () => {
     describe("for object with flat structure", () => {
@@ -98,7 +98,7 @@ export default () => {
             };
 
             const result = validate(validObject, objectStructure);
-            result.valid.should.be.true();            
+            result.valid.should.be.true();
         });
 
         it("should pass valid object with null inner object", () => {
@@ -108,7 +108,7 @@ export default () => {
             };
 
             const result = validate(validObject, objectStructure);
-            result.valid.should.be.true();            
+            result.valid.should.be.true();
         });
 
         it("should fail on invalid inner object data", () => {
@@ -128,5 +128,30 @@ export default () => {
             should(result.errors["delivery.price"]).not.length(1);
             should(result.errors["delivery.price"][0]).equal("Value is required");
         })
+    });
+
+    describe("for expandable object", () => {
+        const structure = expandableObject({
+            id: num().required().must(v => v > 10),
+            title: str().required().must(v => v.length < 20)
+        });
+
+        it("should preserve non-validatable properties", () => {
+            const validObject = {
+                id: 20,
+                title: "test",
+                delivery: {
+                    price: 20,
+                    address: "test address"
+                }
+            };
+
+            const result = validate(validObject, structure);
+
+            result.valid.should.be.true();
+            result.value["id"].should.equal(20);
+            result.value["title"].should.equal("test");
+            result.value["delivery"].should.equal(validObject.delivery);
+        });
     });
 };

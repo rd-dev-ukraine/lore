@@ -110,5 +110,26 @@ exports.default = function () {
             should(result.errors["delivery.price"][0]).equal("Value is required");
         });
     });
+    describe("for expandable object", function () {
+        var structure = validator_1.expandableObject({
+            id: validator_1.num().required().must(function (v) { return v > 10; }),
+            title: validator_1.str().required().must(function (v) { return v.length < 20; })
+        });
+        it("should preserve non-validatable properties", function () {
+            var validObject = {
+                id: 20,
+                title: "test",
+                delivery: {
+                    price: 20,
+                    address: "test address"
+                }
+            };
+            var result = validator_1.validate(validObject, structure);
+            result.valid.should.be.true();
+            result.value["id"].should.equal(20);
+            result.value["title"].should.equal("test");
+            result.value["delivery"].should.equal(validObject.delivery);
+        });
+    });
 };
 //# sourceMappingURL=structural-types-validator-test.js.map
