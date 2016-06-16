@@ -46,7 +46,26 @@ exports.default = function () {
             result.errors["price"][0].should.equal("Positive!!!");
         });
     });
-    describe("for nested objects", function () {
+    describe("for required nested objects", function () {
+        var objectStructure = validator_1.obj({
+            id: validator_1.num().required().must(function (v) { return v > 0; }),
+            title: validator_1.str().required().must(function (s) { return s.length < 10; }),
+            delivery: validator_1.obj({
+                price: validator_1.num().required().must(function (v) { return v > 0; }),
+                address: validator_1.str().required().notEmpty()
+            }, "Delivery data is required")
+        });
+        it("should fail on nested object missing", function () {
+            var invalidObject = {
+                id: 10,
+                title: "test"
+            };
+            var result = validator_1.validate(invalidObject, objectStructure);
+            result.valid.should.be.false();
+            should(result.errors["delivery"][0]).equal("Delivery data is required");
+        });
+    });
+    describe("for optional nested objects", function () {
         var objectStructure = validator_1.obj({
             id: validator_1.num().required().must(function (v) { return v > 0; }),
             title: validator_1.str().required().must(function (s) { return s.length < 10; }),

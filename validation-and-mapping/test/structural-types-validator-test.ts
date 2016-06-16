@@ -54,7 +54,30 @@ export default () => {
         });
     });
 
-    describe("for nested objects", () => {
+    describe("for required nested objects", () => {
+        const objectStructure = obj({
+            id: num().required().must(v => v > 0),
+            title: str().required().must(s => s.length < 10),
+            delivery: obj({
+                price: num().required().must(v => v > 0),
+                address: str().required().notEmpty()
+            }, "Delivery data is required")
+        });
+
+        it("should fail on nested object missing", () => {
+            const invalidObject = {
+                id: 10,
+                title: "test"
+            };
+
+            const result = validate(invalidObject, objectStructure);
+
+            result.valid.should.be.false();
+            should(result.errors["delivery"][0]).equal("Delivery data is required");
+        });
+    });
+
+    describe("for optional nested objects", () => {
         const objectStructure = obj({
             id: num().required().must(v => v > 0),
             title: str().required().must(s => s.length < 10),
