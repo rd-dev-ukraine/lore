@@ -5,28 +5,46 @@ var HashValidationRule = (function () {
         this.elementValidationRule = elementValidationRule;
         this.passNullObject = passNullObject;
         this.nullObjectErrorMessage = nullObjectErrorMessage;
+        this.skipInvalid = false;
         if (!elementValidationRule)
             throw new Error("Element validation rule required");
         if (!passNullObject && !nullObjectErrorMessage)
             throw new Error("Validation message for null object required");
     }
     HashValidationRule.prototype.run = function (value, validationContext, entity, root) {
+        var _this = this;
         if (value === null || value === undefined) {
             if (!this.passNullObject)
                 validationContext.reportError(this.nullObjectErrorMessage);
             return value;
         }
         var result = {};
+        var _loop_1 = function(key) {
+            if (this_1.keyFilteringFunction && !this_1.keyFilteringFunction(key))
+                return "continue";
+            var valid = true;
+            var nestedValidationContext = validationContext.property(key, function () {
+                valid = false;
+                return !_this.skipInvalid;
+            });
+            var convertedValue = this_1.elementValidationRule.run(value[key], nestedValidationContext, value, root);
+            if (valid || !this_1.skipInvalid)
+                result[key] = convertedValue;
+        };
+        var this_1 = this;
         for (var key in value) {
-            if (this.keyFilteringFunction && !this.keyFilteringFunction(key))
-                continue;
-            var nestedValidationContext = validationContext.property(key);
-            result[key] = this.elementValidationRule.run(value[key], nestedValidationContext, value, root);
+            var state_1 = _loop_1(key);
+            if (state_1 === "continue") continue;
         }
         return result;
     };
     HashValidationRule.prototype.filterKeys = function (predicate) {
         this.keyFilteringFunction = predicate;
+        return this;
+    };
+    HashValidationRule.prototype.keepOnlyValid = function (onlyValid) {
+        if (onlyValid === void 0) { onlyValid = true; }
+        this.skipInvalid = onlyValid;
         return this;
     };
     return HashValidationRule;

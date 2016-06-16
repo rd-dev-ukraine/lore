@@ -8,6 +8,7 @@ interface IHash<TElement> {
 
 class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHash<TInElement>, IHash<TOutElement>> {
     private keyFilteringFunction: (key: any) => boolean;
+    private skipInvalid = false;
 
     constructor(
         private elementValidationRule: IValidationRule<TInElement, TOutElement>,
@@ -34,9 +35,15 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
             if (this.keyFilteringFunction && !this.keyFilteringFunction(key))
                 continue;
 
-            const nestedValidationContext = validationContext.property(key);
+            let valid = true;
+            const nestedValidationContext = validationContext.property(key, () => {
+                valid = false;
+                return !this.skipInvalid;
+            });
 
-            result[key] = this.elementValidationRule.run(value[key], nestedValidationContext, value, root);
+            const convertedValue = this.elementValidationRule.run(value[key], nestedValidationContext, value, root);
+            if (valid || !this.skipInvalid)
+                result[key] = convertedValue;
         }
 
         return <IHash<TOutElement>><any>result;
@@ -45,6 +52,11 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
     filterKeys(predicate: (key: any) => boolean): HashValidationRule<TInElement, TOutElement> {
         this.keyFilteringFunction = predicate;
 
+        return this;
+    }
+
+    keepOnlyValid(onlyValid: boolean = true): this {
+        this.skipInvalid = onlyValid;
         return this;
     }
 }

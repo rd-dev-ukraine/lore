@@ -16,8 +16,8 @@ interface ValidateAndTransformFunc<TIn, TOut> {
 
 interface IValidationContext {
     reportError(errorMessage: string): void;
-    property(propertyName: string): IValidationContext;
-    index(index: number): IValidationContext;
+    property(propertyName: string, errorCallback?: (errorMessage: string) => boolean): IValidationContext;
+    index(index: number, errorCallback?: (errorMessage: string) => boolean): IValidationContext;
 }
 
 interface IValidationRule<TIn, TOut> {

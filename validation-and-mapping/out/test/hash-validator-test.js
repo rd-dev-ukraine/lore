@@ -28,6 +28,21 @@ exports.default = function () {
             result.valid.should.be.false();
             should(result.errors["three"][0]).equal("Value is not a valid number");
         });
+        it("must not fail and skip invalid if configured", function () {
+            var numbersHashWithSkip = validator_1.hash(validator_1.num().required().must(function (n) { return n > 0 && n < 10; })).keepOnlyValid();
+            var invalidHash = {
+                one: 1,
+                two: 2,
+                three: "three"
+            };
+            var result = validator_1.validate(invalidHash, numbersHashWithSkip);
+            result.valid.should.be.true();
+            result.value.should.deepEqual({
+                one: 1,
+                two: 2
+            });
+            console.dir(result.value);
+        });
     });
     describe("for objects hash", function () {
         var objectHash = validator_1.hash(validator_1.obj({

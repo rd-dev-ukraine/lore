@@ -35,6 +35,29 @@ export default () => {
             result.valid.should.be.false();
             should(result.errors["three"][0]).equal("Value is not a valid number");
         });
+
+        it("must not fail and skip invalid if configured", () => {
+
+            const numbersHashWithSkip = hash(
+                num().required().must(n => n > 0 && n < 10)
+            ).keepOnlyValid();
+
+            const invalidHash = {
+                one: 1,
+                two: 2,
+                three: "three"
+            };
+
+            const result = validate(invalidHash, numbersHashWithSkip);
+
+            result.valid.should.be.true();
+            result.value.should.deepEqual({
+                one: 1,
+                two: 2
+            });
+
+            console.dir(result.value);
+        });
     });
 
     describe("for objects hash", () => {
