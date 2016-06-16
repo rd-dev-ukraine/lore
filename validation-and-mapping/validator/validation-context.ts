@@ -6,7 +6,7 @@ export default class ValidationContext implements IValidationContext {
     constructor(
         public path: string,
         private errorAccumulator: ErrorAccumulator,
-        private errorCallback: (errorMessage: string) => boolean) {
+        private errorCallback: (errorMessage: string) => boolean = null) {
     }
 
     reportError(message: string): void {

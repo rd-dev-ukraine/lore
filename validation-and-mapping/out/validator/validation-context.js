@@ -2,6 +2,7 @@
 "use strict";
 var ValidationContext = (function () {
     function ValidationContext(path, errorAccumulator, errorCallback) {
+        if (errorCallback === void 0) { errorCallback = null; }
         this.path = path;
         this.errorAccumulator = errorAccumulator;
         this.errorCallback = errorCallback;

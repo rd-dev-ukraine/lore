@@ -46,6 +46,22 @@ exports.default = function () {
             result.errors["price"][0].should.equal("Positive!!!");
         });
     });
+    describe("for any object", function () {
+        it("should support .must() validation rule", function () {
+            var struct = validator_1.obj({
+                id: validator_1.num().required(),
+                price: validator_1.num().required(),
+                retailPrice: validator_1.num().required()
+            }).must(function (v) { return v["price"] < v["retailPrice"]; }, "Price is not profitable");
+            var result = validator_1.validate({
+                id: 10,
+                price: 100,
+                retailPrice: 50
+            }, struct);
+            result.valid.should.be.false();
+            result.errors[""][0].should.equal("Price is not profitable");
+        });
+    });
     describe("for required nested objects", function () {
         var objectStructure = validator_1.obj({
             id: validator_1.num().required().must(function (v) { return v > 0; }),

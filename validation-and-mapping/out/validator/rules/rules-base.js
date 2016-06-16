@@ -4,9 +4,9 @@ var ChainableRuleRunner = (function () {
     function ChainableRuleRunner() {
         this.rules = [];
     }
-    ChainableRuleRunner.prototype.run = function (value, validationContext) {
+    ChainableRuleRunner.prototype.run = function (value, validationContext, entity, root) {
         return this.rules
-            .reduce(function (currentValue, rule) { return rule(currentValue, function (err) { return validationContext.reportError(err); }); }, value);
+            .reduce(function (currentValue, rule) { return rule(currentValue, function (err) { return validationContext.reportError(err); }, entity, root); }, value);
     };
     ChainableRuleRunner.prototype.withRule = function (rule) {
         this.rules.push(rule);

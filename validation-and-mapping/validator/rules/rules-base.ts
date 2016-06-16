@@ -6,9 +6,9 @@ import ValidationContext from "../validation-context";
 export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, TOut> {
     rules: ValidateAndTransformFunc<any, TOut>[] = [];
 
-    run(value: any, validationContext: ValidationContext): TOut {
+    run(value: any, validationContext: ValidationContext, entity: any, root: any): TOut {
         return this.rules
-            .reduce((currentValue, rule) => rule(currentValue, err => validationContext.reportError(err)), value);
+            .reduce((currentValue, rule) => rule(currentValue, err => validationContext.reportError(err), entity, root), value);
     }
 
     withRule(rule: ValidateAndTransformFunc<any, TOut>): this {

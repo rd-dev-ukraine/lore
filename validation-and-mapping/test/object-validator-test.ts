@@ -54,6 +54,25 @@ export default () => {
         });
     });
 
+    describe("for any object", () => {
+        it("should support .must() validation rule", () => {
+            const struct = obj({
+                id: num().required(),
+                price: num().required(),
+                retailPrice: num().required()
+            }).must(v => v["price"] < v["retailPrice"], "Price is not profitable");
+
+            const result = validate<any, any>({
+                id: 10,
+                price: 100,
+                retailPrice: 50
+            }, struct);
+
+            result.valid.should.be.false();
+            result.errors[""][0].should.equal("Price is not profitable");
+        });
+    })
+
     describe("for required nested objects", () => {
         const objectStructure = obj({
             id: num().required().must(v => v > 0),
