@@ -34,7 +34,7 @@ export default () => {
             const result = validate("23234", str().notEmpty());
             result.valid.should.be.true();
             result.value.should.equal("23234");
-            should( result.errors).be.undefined();
+            should(result.errors).be.undefined();
         });
 
         it("should pass if null string and no required rule", () => {
@@ -70,7 +70,7 @@ export default () => {
             invalidResult.value.should.be.NaN();
         });
 
-        
+
         it("should pass if null value and no required rule", () => {
             const result = validate(null, num());
             result.valid.should.be.true();
@@ -82,5 +82,23 @@ export default () => {
             result.valid.should.be.false();
             should(result.value).be.null();
         });
+    });
+
+    describe("with transform", () => {
+        const numbers = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+
+        const transformNumber = num().required().transform(v => numbers[v], "Undefined");
+
+        it("should transform valid values", () => {
+            const result = validate(1, transformNumber);
+            result.valid.should.be.true();
+            result.value.should.equal("one");
+        });
+
+        it("should fail on invalid value", () => {
+            const result = validate(15, transformNumber);
+            result.valid.should.be.false();
+            result.errors[""][0].should.equal("Undefined");
+        })
     });
 };

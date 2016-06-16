@@ -67,5 +67,19 @@ exports.default = function () {
             should(result.value).be.null();
         });
     });
+    describe("with transform", function () {
+        var numbers = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+        var transformNumber = validator_1.num().required().transform(function (v) { return numbers[v]; }, "Undefined");
+        it("should transform valid values", function () {
+            var result = validator_1.validate(1, transformNumber);
+            result.valid.should.be.true();
+            result.value.should.equal("one");
+        });
+        it("should fail on invalid value", function () {
+            var result = validator_1.validate(15, transformNumber);
+            result.valid.should.be.false();
+            result.errors[""][0].should.equal("Undefined");
+        });
+    });
 };
 //# sourceMappingURL=primitive-types-validator-test.js.map

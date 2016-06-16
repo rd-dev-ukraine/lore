@@ -20,6 +20,10 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
         return this.withRule(ChainableRuleRunner.requiredRule(errorMessage));
     }
 
+    transform<TOut>(selector: (value: any, entity?: any, rootEntity?: any) => TOut, errorMessage: string = "Conversion failed"): this {
+        return this.withRule(ChainableRuleRunner.transformRule(selector, errorMessage));
+    }
+
     static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
         return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
             if (!predicate(value, entity, rootEntity)) {
@@ -28,6 +32,22 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
 
             return value;
         };
+    }
+
+    static transformRule<TIn, TOut>(selector: (value: TIn, entity?: any, rootEntity?: any) => TOut, errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
+        return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
+            try {
+                const result = selector(value, entity, rootEntity);
+
+                if (result === null || result === undefined)
+                    reportError(errorMessage);
+
+                return result;
+            }
+            catch (e) {
+                reportError(errorMessage);
+            }
+        }
     }
 
     static requiredRule<TIn, TOut>(errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {

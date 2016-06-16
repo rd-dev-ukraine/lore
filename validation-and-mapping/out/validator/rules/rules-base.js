@@ -16,12 +16,29 @@ var ChainableRuleRunner = (function () {
         if (errorMessage === void 0) { errorMessage = "Value is required"; }
         return this.withRule(ChainableRuleRunner.requiredRule(errorMessage));
     };
+    ChainableRuleRunner.prototype.transform = function (selector, errorMessage) {
+        if (errorMessage === void 0) { errorMessage = "Conversion failed"; }
+        return this.withRule(ChainableRuleRunner.transformRule(selector, errorMessage));
+    };
     ChainableRuleRunner.mustRule = function (predicate, errorMessage) {
         return function (value, reportError, entity, rootEntity) {
             if (!predicate(value, entity, rootEntity)) {
                 reportError(errorMessage);
             }
             return value;
+        };
+    };
+    ChainableRuleRunner.transformRule = function (selector, errorMessage) {
+        return function (value, reportError, entity, rootEntity) {
+            try {
+                var result = selector(value, entity, rootEntity);
+                if (result === null || result === undefined)
+                    reportError(errorMessage);
+                return result;
+            }
+            catch (e) {
+                reportError(errorMessage);
+            }
         };
     };
     ChainableRuleRunner.requiredRule = function (errorMessage) {

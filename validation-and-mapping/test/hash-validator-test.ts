@@ -36,4 +36,32 @@ export default () => {
             should(result.errors["three"][0]).equal("Value is not a valid number");
         });
     });
+
+    describe("for objects hash", () => {
+        const objectHash = hash(
+            obj({
+                id: num().required(),
+                title: str().required()
+            })
+        );
+
+        it("must pass on valid hash", () => {
+            const validHash = {
+                "1": {
+                    id: 1,
+                    title: "one"
+                },
+                "2": {
+                    id: 2,
+                    title: "two"
+                }
+            };
+
+            const result = validate<any, any>(validHash, objectHash);
+
+            result.valid.should.be.true();
+            result.value.should.deepEqual(validHash);
+        });
+
+    });
 };

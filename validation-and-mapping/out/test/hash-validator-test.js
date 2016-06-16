@@ -29,5 +29,26 @@ exports.default = function () {
             should(result.errors["three"][0]).equal("Value is not a valid number");
         });
     });
+    describe("for objects hash", function () {
+        var objectHash = validator_1.hash(validator_1.obj({
+            id: validator_1.num().required(),
+            title: validator_1.str().required()
+        }));
+        it("must pass on valid hash", function () {
+            var validHash = {
+                "1": {
+                    id: 1,
+                    title: "one"
+                },
+                "2": {
+                    id: 2,
+                    title: "two"
+                }
+            };
+            var result = validator_1.validate(validHash, objectHash);
+            result.valid.should.be.true();
+            result.value.should.deepEqual(validHash);
+        });
+    });
 };
 //# sourceMappingURL=hash-validator-test.js.map
