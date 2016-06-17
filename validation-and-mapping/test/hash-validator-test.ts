@@ -21,7 +21,6 @@ export default () => {
 
             result.valid.should.be.true();
             result.value.should.deepEqual(validHash);
-            console.dir(result.value);
         });
 
         it("must fail on invalid numbers", () => {
@@ -55,8 +54,6 @@ export default () => {
                 one: 1,
                 two: 2
             });
-
-            console.dir(result.value);
         });
     });
 

@@ -14,7 +14,7 @@ function validate(value, validator) {
     if (Object.keys(errors).length) {
         return {
             valid: false,
-            value: result,
+            value: null,
             errors: errors
         };
     }

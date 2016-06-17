@@ -16,7 +16,7 @@ export function validate<TIn, TOut>(value: TIn, validator: IValidationRule<TIn, 
     if (Object.keys(errors).length) {
         return {
             valid: false,
-            value: result,
+            value: null,
             errors: errors
         };
     }

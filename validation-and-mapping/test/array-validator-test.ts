@@ -47,8 +47,8 @@ export default () => {
 
             const result = validate(numbers, numberArrayValidatorWithFilter);
             result.valid.should.be.false();
-            result.value.should.deepEqual([1, 2, 4, 20]);
-            result.errors["[3]"][0].should.equal("Value is invalid");
+            should(result.value).be.null();            
+            result.errors["[6]"][0].should.equal("Value is invalid");
         });
 
     });

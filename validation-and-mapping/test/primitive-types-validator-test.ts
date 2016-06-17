@@ -67,7 +67,7 @@ export default () => {
             const notConvertibleValue = "sdfsdf";
             const invalidResult = validate(notConvertibleValue, num());
             invalidResult.valid.should.be.false();
-            invalidResult.value.should.be.NaN();
+            should(invalidResult.value).be.null();
         });
 
 

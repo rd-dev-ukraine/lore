@@ -54,7 +54,7 @@ exports.default = function () {
             var notConvertibleValue = "sdfsdf";
             var invalidResult = validator_1.validate(notConvertibleValue, validator_1.num());
             invalidResult.valid.should.be.false();
-            invalidResult.value.should.be.NaN();
+            should(invalidResult.value).be.null();
         });
         it("should pass if null value and no required rule", function () {
             var result = validator_1.validate(null, validator_1.num());

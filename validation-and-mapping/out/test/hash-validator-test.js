@@ -16,7 +16,6 @@ exports.default = function () {
             var result = validator_1.validate(validHash, numbersHash);
             result.valid.should.be.true();
             result.value.should.deepEqual(validHash);
-            console.dir(result.value);
         });
         it("must fail on invalid numbers", function () {
             var invalidHash = {
@@ -41,7 +40,6 @@ exports.default = function () {
                 one: 1,
                 two: 2
             });
-            console.dir(result.value);
         });
     });
     describe("for objects hash", function () {

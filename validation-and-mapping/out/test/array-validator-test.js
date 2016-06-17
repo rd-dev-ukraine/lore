@@ -1,4 +1,6 @@
 "use strict";
+/// <reference path="../validator/validator.d.ts" />
+var should = require("should");
 var validator_1 = require("../validator");
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = function () {
@@ -28,8 +30,8 @@ exports.default = function () {
             var numbers = [1, 2, 100, 200, 4, 300, 20];
             var result = validator_1.validate(numbers, numberArrayValidatorWithFilter);
             result.valid.should.be.false();
-            result.value.should.deepEqual([1, 2, 4, 20]);
-            result.errors["[3]"][0].should.equal("Value is invalid");
+            should(result.value).be.null();
+            result.errors["[6]"][0].should.equal("Value is invalid");
         });
     });
 };

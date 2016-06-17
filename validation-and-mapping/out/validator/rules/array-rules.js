@@ -22,7 +22,7 @@ var ArrayValidationRule = (function () {
             if (this_1.filter && !this_1.filter(elem, value, root))
                 return "continue";
             var valid = true;
-            var nestedValidationContext = validationContext.index(result.length, function () {
+            var nestedValidationContext = validationContext.index(i, function () {
                 valid = false;
                 return !_this.keepOnlyValidElements;
             });

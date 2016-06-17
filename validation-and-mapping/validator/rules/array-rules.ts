@@ -33,7 +33,7 @@ class ArrayValidationRule<TInElement, TOutElement> implements IValidationRule<TI
 
             let valid = true;
 
-            const nestedValidationContext = validationContext.index(result.length, () => {
+            const nestedValidationContext = validationContext.index(i, () => {
                 valid = false;
                 return !this.keepOnlyValidElements;
             });
