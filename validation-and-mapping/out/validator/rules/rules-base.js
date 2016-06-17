@@ -20,6 +20,10 @@ var ChainableRuleRunner = (function () {
         if (errorMessage === void 0) { errorMessage = "Conversion failed"; }
         return this.withRule(ChainableRuleRunner.transformRule(selector, errorMessage));
     };
+    ChainableRuleRunner.prototype.must = function (predicate, errorMessage) {
+        if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
+        return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
+    };
     ChainableRuleRunner.mustRule = function (predicate, errorMessage) {
         return function (value, reportError, entity, rootEntity) {
             if (!predicate(value, entity, rootEntity)) {
@@ -32,13 +36,15 @@ var ChainableRuleRunner = (function () {
         return function (value, reportError, entity, rootEntity) {
             try {
                 var result = selector(value, entity, rootEntity);
-                if (result === null || result === undefined)
+                if (result === null || result === undefined) {
                     reportError(errorMessage);
+                }
                 return result;
             }
             catch (e) {
                 reportError(errorMessage);
             }
+            ;
         };
     };
     ChainableRuleRunner.requiredRule = function (errorMessage) {

@@ -1,7 +1,7 @@
 /// <reference path="../validator/validator.d.ts" />
 import * as should from "should";
 
-import { validate, str, num } from "../validator";
+import { validate, str, num, any } from "../validator";
 
 export default () => {
     describe("for string", () => {
@@ -101,4 +101,16 @@ export default () => {
             result.errors[""][0].should.equal("Undefined");
         })
     });
+
+    describe("for any project", () => {
+        const validator = any(v => new Date(`${v}`) !== undefined, "Invalid date")
+            .transform(v => new Date(`${v}`));
+
+        it("must validate correct date", () => {
+            const result = validate("2014-11-01", validator);
+
+            result.valid.should.be.true();
+            (<Date>result.value).getTime().should.equal(new Date("2014-11-01").getTime());
+        });
+    })
 };

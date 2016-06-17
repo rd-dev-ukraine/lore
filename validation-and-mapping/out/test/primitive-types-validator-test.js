@@ -81,5 +81,14 @@ exports.default = function () {
             result.errors[""][0].should.equal("Undefined");
         });
     });
+    describe("for any project", function () {
+        var validator = validator_1.any(function (v) { return new Date("" + v) !== undefined; }, "Invalid date")
+            .transform(function (v) { return new Date("" + v); });
+        it("must validate correct date", function () {
+            var result = validator_1.validate("2014-11-01", validator);
+            result.valid.should.be.true();
+            result.value.getTime().should.equal(new Date("2014-11-01").getTime());
+        });
+    });
 };
 //# sourceMappingURL=primitive-types-validator-test.js.map

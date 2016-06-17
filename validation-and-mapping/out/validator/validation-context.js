@@ -8,8 +8,9 @@ var ValidationContext = (function () {
         this.errorCallback = errorCallback;
     }
     ValidationContext.prototype.reportError = function (message) {
-        if (this.errorCallback && !this.errorCallback(message))
+        if (this.errorCallback && !this.errorCallback(message)) {
             return;
+        }
         this.errorAccumulator
             .report(this.path, message);
     };

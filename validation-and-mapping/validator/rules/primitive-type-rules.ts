@@ -6,11 +6,7 @@ export class StringRules extends ChainableRuleRunner<string> {
 
     notEmpty(errorMessage: string = "Value can not be empty"): this {
         return this.withRule(StringRules.notEmtpyRule(errorMessage));
-    }
-
-    must(predicate: (value: string, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
-        return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
-    }
+    }    
 
     static isStringRule(errorMessage: string, convert: boolean): ValidateAndTransformFunc<any, string> {
         return (value: any, reportError: ReportErrorFunction) => {
@@ -37,12 +33,7 @@ export class StringRules extends ChainableRuleRunner<string> {
     }
 }
 
-export class NumberRules extends ChainableRuleRunner<number> {
-
-    must(predicate: (value: number, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
-        return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
-    }
-
+export class NumberRules extends ChainableRuleRunner<number> {    
 
     static isNumberRule(errorMessage: string): ValidateAndTransformFunc<any, number> {
         return (value: any, reportError: ReportErrorFunction) => {
@@ -65,10 +56,17 @@ export class NumberRules extends ChainableRuleRunner<number> {
     }
 }
 
+export class AnyRules<T> extends ChainableRuleRunner<T> {
+}
+
 export function str(errorMessage: string = "Value is not a string.", convert: boolean = true): StringRules {
     return new StringRules().withRule(StringRules.isStringRule(errorMessage, convert));
 }
 
 export function num(errorMessage: string = "Value is not a valid number"): NumberRules {
     return new NumberRules().withRule(NumberRules.isNumberRule(errorMessage));
+}
+
+export function any<T>(predicate: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid" ): AnyRules<T> {
+    return new AnyRules<T>().must(predicate, errorMessage);
 }
