@@ -1,5 +1,4 @@
-/// <reference path="../validator.d.ts" />
-
+import { IValidationRule, ValidateAndTransformFunc, ReportErrorFunction } from "../definitions";
 import ValidationContext from "../validation-context";
 
 
@@ -26,7 +25,7 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
 
     must(predicate: (value: any, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
         return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));
-    }   
+    }
 
     static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
         return (value: TIn, reportError: ReportErrorFunction, entity: any, rootEntity: any) => {

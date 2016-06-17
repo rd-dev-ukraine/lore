@@ -1,4 +1,4 @@
-/// <reference path="../validator.d.ts" />
+import { IValidationRule } from "../definitions";
 
 import ValidationContext from "../validation-context";
 

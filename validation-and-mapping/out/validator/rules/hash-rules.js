@@ -1,4 +1,3 @@
-/// <reference path="../validator.d.ts" />
 "use strict";
 var HashValidationRule = (function () {
     function HashValidationRule(elementValidationRule, passNullObject, nullObjectErrorMessage) {

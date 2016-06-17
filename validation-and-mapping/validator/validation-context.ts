@@ -1,4 +1,4 @@
-/// <reference path="./validator.d.ts" />
+import { IValidationContext } from "./definitions";
 
 import ErrorAccumulator from "./error-accumulator";
 

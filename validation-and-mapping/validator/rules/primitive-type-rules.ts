@@ -1,12 +1,11 @@
-/// <reference path="../validator.d.ts" />
-
+import { IValidationRule, ValidateAndTransformFunc, ReportErrorFunction } from "../definitions";
 import { ChainableRuleRunner } from "./rules-base";
 
 export class StringRules extends ChainableRuleRunner<string> {
 
     notEmpty(errorMessage: string = "Value can not be empty"): this {
         return this.withRule(StringRules.notEmtpyRule(errorMessage));
-    }    
+    }
 
     static isStringRule(errorMessage: string, convert: boolean): ValidateAndTransformFunc<any, string> {
         return (value: any, reportError: ReportErrorFunction) => {
@@ -33,7 +32,7 @@ export class StringRules extends ChainableRuleRunner<string> {
     }
 }
 
-export class NumberRules extends ChainableRuleRunner<number> {    
+export class NumberRules extends ChainableRuleRunner<number> {
 
     static isNumberRule(errorMessage: string): ValidateAndTransformFunc<any, number> {
         return (value: any, reportError: ReportErrorFunction) => {
@@ -67,6 +66,6 @@ export function num(errorMessage: string = "Value is not a valid number"): Numbe
     return new NumberRules().withRule(NumberRules.isNumberRule(errorMessage));
 }
 
-export function any<T>(predicate: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid" ): AnyRules<T> {
+export function any<T>(predicate: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): AnyRules<T> {
     return new AnyRules<T>().must(predicate, errorMessage);
 }

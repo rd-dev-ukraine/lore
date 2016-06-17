@@ -1,4 +1,3 @@
-/// <reference path="../validator/validator.d.ts" />
 import * as should from "should";
 
 import { validate, obj, objOptional, str, num, hash, hashOptional } from "../validator";

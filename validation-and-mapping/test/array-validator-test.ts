@@ -1,4 +1,3 @@
-/// <reference path="../validator/validator.d.ts" />
 import * as should from "should";
 
 import { validate, obj, objOptional, str, num, hash, hashOptional, arr, arrOptional } from "../validator";
@@ -47,7 +46,7 @@ export default () => {
 
             const result = validate(numbers, numberArrayValidatorWithFilter);
             result.valid.should.be.false();
-            should(result.value).be.null();            
+            should(result.value).be.null();
             result.errors["[6]"][0].should.equal("Value is invalid");
         });
 

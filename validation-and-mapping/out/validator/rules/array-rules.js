@@ -1,4 +1,3 @@
-/// <reference path="../validator.d.ts" />
 "use strict";
 var ArrayValidationRule = (function () {
     function ArrayValidationRule(elementValidator, passNullOrEmptyArray, nullOrEmptyArrayErrorMessage) {

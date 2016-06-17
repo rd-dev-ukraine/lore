@@ -1,5 +1,4 @@
 "use strict";
-/// <reference path="../validator/validator.d.ts" />
 var should = require("should");
 var validator_1 = require("../validator");
 Object.defineProperty(exports, "__esModule", { value: true });

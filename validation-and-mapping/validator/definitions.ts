@@ -1,26 +1,26 @@
-interface ValidationErrors {
+export interface ValidationErrors {
     [path: string]: string[];
 }
 
-interface ValidationResult<TOut> {
+export interface ValidationResult<TOut> {
     valid: boolean;
     value: TOut;
     errors?: ValidationErrors;
 }
 
-type ReportErrorFunction = (errorMessage: string) => void;
+export type ReportErrorFunction = (errorMessage: string) => void;
 
-interface ValidateAndTransformFunc<TIn, TOut> {
+export interface ValidateAndTransformFunc<TIn, TOut> {
     (value: TIn, reportError: ReportErrorFunction, entity?: any, rootEntity?: any): any;
 }
 
-interface IValidationContext {
+export interface IValidationContext {
     reportError(errorMessage: string): void;
     property(propertyName: string, errorCallback?: (errorMessage: string) => boolean): IValidationContext;
     index(index: number, errorCallback?: (errorMessage: string) => boolean): IValidationContext;
 }
 
-interface IValidationRule<TIn, TOut> {
+export interface IValidationRule<TIn, TOut> {
     /**
      * Run validation of the specified value with callback to given context.
      * 
@@ -31,6 +31,3 @@ interface IValidationRule<TIn, TOut> {
      */
     run(value: TIn, validationContext: IValidationContext, entity: any, root: any): TOut;
 }
-
-
-

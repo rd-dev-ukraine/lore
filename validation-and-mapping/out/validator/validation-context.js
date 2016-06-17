@@ -1,4 +1,3 @@
-/// <reference path="./validator.d.ts" />
 "use strict";
 var ValidationContext = (function () {
     function ValidationContext(path, errorAccumulator, errorCallback) {

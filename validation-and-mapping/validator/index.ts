@@ -1,7 +1,8 @@
-/// <reference path="./validator.d.ts" />
+import { IValidationRule, ValidationResult } from "./definitions";
 import ErrorAccumulator from "./error-accumulator";
 import ValidationContext from "./validation-context";
 
+export * from "./definitions";
 export * from "./rules";
 
 export function validate<TIn, TOut>(value: TIn, ...validators: IValidationRule<TIn, TOut>[]): ValidationResult<TOut> {
@@ -12,7 +13,7 @@ export function validate<TIn, TOut>(value: TIn, ...validators: IValidationRule<T
     const errorAccumulator = new ErrorAccumulator();
     const validationContext = new ValidationContext("", errorAccumulator);
 
-    const result = <TOut><any>validators.reduce((val, validator) =>  <TIn><any>validator.run(val, validationContext, val, val) || value, value);
+    const result = <TOut><any>validators.reduce((val, validator) => <TIn><any>validator.run(val, validationContext, val, val) || value, value);
 
     const errors = errorAccumulator.errors();
 
