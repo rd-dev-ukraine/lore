@@ -6,10 +6,17 @@ function __export(m) {
 var error_accumulator_1 = require("./error-accumulator");
 var validation_context_1 = require("./validation-context");
 __export(require("./rules"));
-function validate(value, validator) {
+function validate(value) {
+    var validators = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        validators[_i - 1] = arguments[_i];
+    }
+    if (!validators || !validators.length) {
+        throw new Error("At least one validator is required");
+    }
     var errorAccumulator = new error_accumulator_1.default();
     var validationContext = new validation_context_1.default("", errorAccumulator);
-    var result = validator.run(value, validationContext, value, value);
+    var result = validators.reduce(function (val, validator) { return validator.run(val, validationContext, val, val) || value; }, value);
     var errors = errorAccumulator.errors();
     if (Object.keys(errors).length) {
         return {

@@ -147,5 +147,46 @@ exports.default = function () {
             result.value["delivery"].should.equal(validObject.delivery);
         });
     });
+    describe("for multiple validators", function () {
+        var idValidator = validator_1.expandableObject({
+            id: validator_1.num().required().transform(function (v) { return v * 10; })
+        });
+        var titleValidator = validator_1.expandableObject({
+            title: validator_1.str().required().must(function (t) { return t.length < 20; })
+        });
+        var idValidityValidator = validator_1.expandableObject({
+            id: validator_1.num().required().must(function (v) { return v < 100; }, "Id too large")
+        });
+        it("valid object must pass validator chain", function () {
+            var validObject = {
+                id: 5,
+                title: "test"
+            };
+            var result = validator_1.validate(validObject, idValidator, titleValidator, idValidityValidator);
+            result.valid.should.be.true();
+            result.value.should.deepEqual({
+                id: 50,
+                title: "test"
+            });
+        });
+        it("must stop if failed on first validator", function () {
+            var invalidObject = {
+                id: "sdfsdf",
+                title: "test"
+            };
+            var result = validator_1.validate(invalidObject, idValidator, titleValidator, idValidityValidator);
+            result.valid.should.be.false();
+            should(result.errors["id"][0]).equal("Value is not a valid number");
+        });
+        it("validators must validate data converted by previous validator", function () {
+            var invalidObject = {
+                id: 40,
+                title: "test"
+            };
+            var result = validator_1.validate(invalidObject, idValidator, titleValidator, idValidityValidator);
+            result.valid.should.be.false();
+            should(result.errors["id"][0]).equal("Id too large");
+        });
+    });
 };
 //# sourceMappingURL=object-validator-test.js.map

@@ -173,4 +173,57 @@ export default () => {
             result.value["delivery"].should.equal(validObject.delivery);
         });
     });
+
+    describe("for multiple validators", () => {
+        const idValidator = expandableObject({
+            id: num().required().transform(v => v * 10)
+        });
+
+        const titleValidator = expandableObject({
+            title: str().required().must(t => t.length < 20)
+        });
+
+        const idValidityValidator = expandableObject({
+            id: num().required().must(v => v < 100, "Id too large")
+        });
+
+        it("valid object must pass validator chain", () => {
+            const validObject = {
+                id: 5,
+                title: "test"
+            };
+
+            const result = validate(validObject, idValidator, titleValidator, idValidityValidator);
+
+            result.valid.should.be.true();
+            result.value.should.deepEqual({
+                id: 50,
+                title: "test"
+            });
+        });
+
+        it("must stop if failed on first validator", () => {
+            const invalidObject = {
+                id: "sdfsdf",
+                title: "test"
+            };
+
+            const result = validate(invalidObject, idValidator, titleValidator, idValidityValidator);
+
+            result.valid.should.be.false();
+            should(result.errors["id"][0]).equal("Value is not a valid number");
+        });
+
+        it("validators must validate data converted by previous validator", () => {
+            const invalidObject = {
+                id: 40,
+                title: "test"
+            };
+
+            const result = validate(invalidObject, idValidator, titleValidator, idValidityValidator);
+
+            result.valid.should.be.false();
+            should(result.errors["id"][0]).equal("Id too large");
+        });
+    });
 };
