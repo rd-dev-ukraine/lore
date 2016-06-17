@@ -2,8 +2,6 @@
 import ErrorAccumulator from "./error-accumulator";
 import ValidationContext from "./validation-context";
 
-import * as r from "./rules";
-
 export * from "./rules";
 
 export function validate<TIn, TOut>(value: TIn, ...validators: IValidationRule<TIn, TOut>[]): ValidationResult<TOut> {
@@ -29,5 +27,5 @@ export function validate<TIn, TOut>(value: TIn, ...validators: IValidationRule<T
     return {
         valid: true,
         value: result
-    }
+    };
 }

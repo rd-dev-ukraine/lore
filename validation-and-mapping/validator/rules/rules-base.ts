@@ -39,15 +39,16 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
             try {
                 const result = selector(value, entity, rootEntity);
 
-                if (result === null || result === undefined)
+                if (result === null || result === undefined) {
                     reportError(errorMessage);
+                }
 
                 return result;
             }
             catch (e) {
                 reportError(errorMessage);
-            }
-        }
+            };
+        };
     }
 
     static requiredRule<TIn, TOut>(errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
@@ -57,6 +58,6 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
             }
 
             return value;
-        }
+        };
     }
 }

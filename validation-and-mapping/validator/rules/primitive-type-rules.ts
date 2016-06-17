@@ -14,11 +14,13 @@ export class StringRules extends ChainableRuleRunner<string> {
 
     static isStringRule(errorMessage: string, convert: boolean): ValidateAndTransformFunc<any, string> {
         return (value: any, reportError: ReportErrorFunction) => {
-            if (value === null || value === undefined)
+            if (value === null || value === undefined) {
                 return value;
+            }
 
-            if (typeof value !== "string" && !convert)
+            if (typeof value !== "string" && !convert) {
                 reportError(errorMessage);
+            }
 
             return value.toString();
         };
@@ -26,11 +28,12 @@ export class StringRules extends ChainableRuleRunner<string> {
 
     static notEmtpyRule(errorMessage: string): ValidateAndTransformFunc<string, string> {
         return (value: string, reportError: ReportErrorFunction) => {
-            if (!value || !value.trim())
+            if (!value || !value.trim()) {
                 reportError(errorMessage);
+            }
 
             return value;
-        }
+        };
     }
 }
 
@@ -43,14 +46,16 @@ export class NumberRules extends ChainableRuleRunner<number> {
 
     static isNumberRule(errorMessage: string): ValidateAndTransformFunc<any, number> {
         return (value: any, reportError: ReportErrorFunction) => {
-            if (value === null || value === undefined)
+            if (value === null || value === undefined) {
                 return value;
+            }
 
             if (typeof value !== "number") {
                 const result = parseFloat("" + value);
 
-                if (isNaN(result))
+                if (isNaN(result)) {
                     reportError(errorMessage);
+                }
 
                 return result;
             }
