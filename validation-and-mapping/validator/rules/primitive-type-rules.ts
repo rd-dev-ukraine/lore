@@ -2,7 +2,7 @@
 
 import { ChainableRuleRunner } from "./rules-base";
 
-class StringRules extends ChainableRuleRunner<string> {
+export class StringRules extends ChainableRuleRunner<string> {
 
     notEmpty(errorMessage: string = "Value can not be empty"): this {
         return this.withRule(StringRules.notEmtpyRule(errorMessage));
@@ -34,7 +34,7 @@ class StringRules extends ChainableRuleRunner<string> {
     }
 }
 
-class NumberRules extends ChainableRuleRunner<number> {
+export class NumberRules extends ChainableRuleRunner<number> {
 
     must(predicate: (value: number, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
         return this.withRule(ChainableRuleRunner.mustRule(predicate, errorMessage));

@@ -3,7 +3,7 @@
 export default class ErrorAccumulator {
     private errorHash: ValidationErrors = {};
 
-    report(path: string, errorMessage: string) {
+    report(path: string, errorMessage: string): void {
         if (!errorMessage) {
             return;
         }

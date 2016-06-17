@@ -37,6 +37,7 @@ var StringRules = (function (_super) {
     };
     return StringRules;
 }(rules_base_1.ChainableRuleRunner));
+exports.StringRules = StringRules;
 var NumberRules = (function (_super) {
     __extends(NumberRules, _super);
     function NumberRules() {
@@ -61,6 +62,7 @@ var NumberRules = (function (_super) {
     };
     return NumberRules;
 }(rules_base_1.ChainableRuleRunner));
+exports.NumberRules = NumberRules;
 function str(errorMessage, convert) {
     if (errorMessage === void 0) { errorMessage = "Value is not a string."; }
     if (convert === void 0) { convert = true; }

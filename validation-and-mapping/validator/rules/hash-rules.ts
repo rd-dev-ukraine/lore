@@ -2,11 +2,11 @@
 
 import ValidationContext from "../validation-context";
 
-interface IHash<TElement> {
+export interface IHash<TElement> {
     [key: string]: TElement;
 }
 
-class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHash<TInElement>, IHash<TOutElement>> {
+export class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHash<TInElement>, IHash<TOutElement>> {
     private keyFilteringFunction: (key: any) => boolean;
     private skipInvalid = false;
 
@@ -18,16 +18,19 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
         private passNullObject: boolean,
         private nullObjectErrorMessage?: string) {
 
-        if (!elementValidationRule)
+        if (!elementValidationRule) {
             throw new Error("Element validation rule required");
-        if (!passNullObject && !nullObjectErrorMessage)
+        }
+        if (!passNullObject && !nullObjectErrorMessage) {
             throw new Error("Validation message for null object required");
+        }
     }
 
     run(value: IHash<TInElement>, validationContext: ValidationContext, entity: any, root: any): IHash<TOutElement> {
         if (value === null || value === undefined) {
-            if (!this.passNullObject)
+            if (!this.passNullObject) {
                 validationContext.reportError(this.nullObjectErrorMessage);
+            }
 
             return <IHash<TOutElement>><any>value;
         }
@@ -38,11 +41,12 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
             return <IHash<TOutElement>><any>value;
         }
 
-        const result = {};
+        const result: IHash<TOutElement> = {};
 
         for (let key in value) {
-            if (this.keyFilteringFunction && !this.keyFilteringFunction(key))
+            if (this.keyFilteringFunction && !this.keyFilteringFunction(key)) {
                 continue;
+            }
 
             let valid = true;
             const nestedValidationContext = validationContext.property(key, () => {
@@ -51,18 +55,21 @@ class HashValidationRule<TInElement, TOutElement> implements IValidationRule<IHa
             });
 
             const convertedValue = this.elementValidationRule.run(value[key], nestedValidationContext, value, root);
-            if (valid || !this.skipInvalid)
+            if (valid || !this.skipInvalid) {
                 result[key] = convertedValue;
+            }
         }
 
         return <IHash<TOutElement>><any>result;
     }
 
     must(predicate: (value: IHash<TInElement>, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
-        if (!predicate)
+        if (!predicate) {
             throw new Error("predicate is required");
-        if (!errorMessage)
+        }
+        if (!errorMessage) {
             throw new Error("Error message is required");
+        }
 
         this.mustPredicate = predicate;
         this.mustErrorMessage = errorMessage;

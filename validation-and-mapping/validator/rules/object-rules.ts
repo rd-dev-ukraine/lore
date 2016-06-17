@@ -5,7 +5,11 @@ export interface IPropertyValidationHash {
     [property: string]: IValidationRule<any, any>;
 }
 
-abstract class ObjectValidationRuleBase<TIn, TOut> implements IValidationRule<TIn, TOut> {
+export interface IObject {
+    [property: string]: any;
+}
+
+export abstract class ObjectValidationRuleBase<TIn, TOut> implements IValidationRule<TIn, TOut> {
     private mustPredicate: (value: TIn, entity: any, root: any) => boolean;
     private mustError = "";
 
@@ -13,16 +17,19 @@ abstract class ObjectValidationRuleBase<TIn, TOut> implements IValidationRule<TI
         protected struct: IPropertyValidationHash,
         protected passNullObject: boolean,
         protected nullObjectErrorMessage?: string) {
-        if (!struct)
+        if (!struct) {
             throw new Error("object structure descriptor is required");
-        if (!passNullObject && !nullObjectErrorMessage)
+        }
+        if (!passNullObject && !nullObjectErrorMessage) {
             throw new Error("Validation message for null object required");
+        }
     }
 
     run(value: TIn, validationContext: ValidationContext, entity: any, root: any): TOut {
         if (value === null || value === undefined) {
-            if (!this.passNullObject)
+            if (!this.passNullObject) {
                 validationContext.reportError(this.nullObjectErrorMessage);
+            }
 
             return <TOut><any>value;
         }
@@ -34,11 +41,13 @@ abstract class ObjectValidationRuleBase<TIn, TOut> implements IValidationRule<TI
         return this.runCore(value, validationContext, entity, root);
     }
 
-    must(predicate: (value: TIn, entity?: any, root?: any) => boolean, errorMessage: string = "Object data is not valid.") {
-        if (!predicate)
+    must(predicate: (value: TIn, entity?: any, root?: any) => boolean, errorMessage: string = "Object data is not valid."): this {
+        if (!predicate) {
             throw new Error("Predicate is requried");
-        if (!errorMessage)
+        }
+        if (!errorMessage) {
             throw new Error("Error message is required");
+        }
 
         this.mustPredicate = predicate;
         this.mustError = errorMessage;
@@ -49,7 +58,7 @@ abstract class ObjectValidationRuleBase<TIn, TOut> implements IValidationRule<TI
     abstract runCore(value: TIn, validationContext: ValidationContext, entity: any, root: any): TOut;
 }
 
-class ObjectValidationRule<TIn, TOut> extends ObjectValidationRuleBase<TIn, TOut> {
+export class ObjectValidationRule<TIn extends IObject, TOut> extends ObjectValidationRuleBase<TIn, TOut> {
 
     constructor(
         struct: IPropertyValidationHash,
@@ -60,22 +69,24 @@ class ObjectValidationRule<TIn, TOut> extends ObjectValidationRuleBase<TIn, TOut
     }
 
     runCore(value: TIn, validationContext: ValidationContext, entity: any, root: any): TOut {
-        const result = {};
+        const result: IObject = {};
 
         for (let property in this.struct) {
-            const rule = this.struct[property];
-            const inputValue = value[property];
+            if (this.struct.hasOwnProperty(property)) {
+                const rule = this.struct[property];
+                const inputValue = value[property];
 
-            const nestedContext = validationContext.property(property);
+                const nestedContext = validationContext.property(property);
 
-            result[property] = rule.run(inputValue, nestedContext, value, root);
+                result[property] = rule.run(inputValue, nestedContext, value, root);
+            }
         }
 
         return <TOut>result;
     }
 }
 
-class ExpandableObjectValidationRule<TIn, TOut> extends ObjectValidationRuleBase<TIn, TOut> {
+export class ExpandableObjectValidationRule<TIn extends IObject, TOut> extends ObjectValidationRuleBase<TIn, TOut> {
 
     constructor(
         struct: IPropertyValidationHash,
@@ -86,25 +97,27 @@ class ExpandableObjectValidationRule<TIn, TOut> extends ObjectValidationRuleBase
     }
 
     runCore(value: TIn, validationContext: ValidationContext, entity: any, root: any): TOut {
-        const result = {};
+        const result: IObject = {};
 
         for (let property in value) {
-            const rule = this.struct[property];
+            if (value.hasOwnProperty(property)) {
 
-            if (rule) {
-                const inputValue = value[property];
-                const nestedContext = validationContext.property(property);
-                result[property] = rule.run(inputValue, nestedContext, value, root);
-            }
-            else {
-                result[property] = value[property];
+                const rule = this.struct[property];
+
+                if (rule) {
+                    const inputValue = value[property];
+                    const nestedContext = validationContext.property(property);
+                    result[property] = rule.run(inputValue, nestedContext, value, root);
+                }
+                else {
+                    result[property] = value[property];
+                }
             }
         }
 
         return <TOut>result;
     }
 }
-
 
 /**
  * Creates a rule which validates given object according to structure.

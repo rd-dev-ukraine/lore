@@ -10,15 +10,18 @@ var ObjectValidationRuleBase = (function () {
         this.passNullObject = passNullObject;
         this.nullObjectErrorMessage = nullObjectErrorMessage;
         this.mustError = "";
-        if (!struct)
+        if (!struct) {
             throw new Error("object structure descriptor is required");
-        if (!passNullObject && !nullObjectErrorMessage)
+        }
+        if (!passNullObject && !nullObjectErrorMessage) {
             throw new Error("Validation message for null object required");
+        }
     }
     ObjectValidationRuleBase.prototype.run = function (value, validationContext, entity, root) {
         if (value === null || value === undefined) {
-            if (!this.passNullObject)
+            if (!this.passNullObject) {
                 validationContext.reportError(this.nullObjectErrorMessage);
+            }
             return value;
         }
         if (this.mustPredicate && !this.mustPredicate(value, entity, root)) {
@@ -28,16 +31,19 @@ var ObjectValidationRuleBase = (function () {
     };
     ObjectValidationRuleBase.prototype.must = function (predicate, errorMessage) {
         if (errorMessage === void 0) { errorMessage = "Object data is not valid."; }
-        if (!predicate)
+        if (!predicate) {
             throw new Error("Predicate is requried");
-        if (!errorMessage)
+        }
+        if (!errorMessage) {
             throw new Error("Error message is required");
+        }
         this.mustPredicate = predicate;
         this.mustError = errorMessage;
         return this;
     };
     return ObjectValidationRuleBase;
 }());
+exports.ObjectValidationRuleBase = ObjectValidationRuleBase;
 var ObjectValidationRule = (function (_super) {
     __extends(ObjectValidationRule, _super);
     function ObjectValidationRule(struct, passNullObject, nullObjectErrorMessage) {
@@ -46,15 +52,18 @@ var ObjectValidationRule = (function (_super) {
     ObjectValidationRule.prototype.runCore = function (value, validationContext, entity, root) {
         var result = {};
         for (var property in this.struct) {
-            var rule = this.struct[property];
-            var inputValue = value[property];
-            var nestedContext = validationContext.property(property);
-            result[property] = rule.run(inputValue, nestedContext, value, root);
+            if (this.struct.hasOwnProperty(property)) {
+                var rule = this.struct[property];
+                var inputValue = value[property];
+                var nestedContext = validationContext.property(property);
+                result[property] = rule.run(inputValue, nestedContext, value, root);
+            }
         }
         return result;
     };
     return ObjectValidationRule;
 }(ObjectValidationRuleBase));
+exports.ObjectValidationRule = ObjectValidationRule;
 var ExpandableObjectValidationRule = (function (_super) {
     __extends(ExpandableObjectValidationRule, _super);
     function ExpandableObjectValidationRule(struct, passNullObject, nullObjectErrorMessage) {
@@ -63,20 +72,23 @@ var ExpandableObjectValidationRule = (function (_super) {
     ExpandableObjectValidationRule.prototype.runCore = function (value, validationContext, entity, root) {
         var result = {};
         for (var property in value) {
-            var rule = this.struct[property];
-            if (rule) {
-                var inputValue = value[property];
-                var nestedContext = validationContext.property(property);
-                result[property] = rule.run(inputValue, nestedContext, value, root);
-            }
-            else {
-                result[property] = value[property];
+            if (value.hasOwnProperty(property)) {
+                var rule = this.struct[property];
+                if (rule) {
+                    var inputValue = value[property];
+                    var nestedContext = validationContext.property(property);
+                    result[property] = rule.run(inputValue, nestedContext, value, root);
+                }
+                else {
+                    result[property] = value[property];
+                }
             }
         }
         return result;
     };
     return ExpandableObjectValidationRule;
 }(ObjectValidationRuleBase));
+exports.ExpandableObjectValidationRule = ExpandableObjectValidationRule;
 /**
  * Creates a rule which validates given object according to structure.
  * Any extra properties would be omitted from the result.

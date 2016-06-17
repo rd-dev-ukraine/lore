@@ -6,16 +6,19 @@ var HashValidationRule = (function () {
         this.passNullObject = passNullObject;
         this.nullObjectErrorMessage = nullObjectErrorMessage;
         this.skipInvalid = false;
-        if (!elementValidationRule)
+        if (!elementValidationRule) {
             throw new Error("Element validation rule required");
-        if (!passNullObject && !nullObjectErrorMessage)
+        }
+        if (!passNullObject && !nullObjectErrorMessage) {
             throw new Error("Validation message for null object required");
+        }
     }
     HashValidationRule.prototype.run = function (value, validationContext, entity, root) {
         var _this = this;
         if (value === null || value === undefined) {
-            if (!this.passNullObject)
+            if (!this.passNullObject) {
                 validationContext.reportError(this.nullObjectErrorMessage);
+            }
             return value;
         }
         if (this.mustPredicate && !this.mustPredicate(value, entity, root)) {
@@ -24,16 +27,18 @@ var HashValidationRule = (function () {
         }
         var result = {};
         var _loop_1 = function(key) {
-            if (this_1.keyFilteringFunction && !this_1.keyFilteringFunction(key))
+            if (this_1.keyFilteringFunction && !this_1.keyFilteringFunction(key)) {
                 return "continue";
+            }
             var valid = true;
             var nestedValidationContext = validationContext.property(key, function () {
                 valid = false;
                 return !_this.skipInvalid;
             });
             var convertedValue = this_1.elementValidationRule.run(value[key], nestedValidationContext, value, root);
-            if (valid || !this_1.skipInvalid)
+            if (valid || !this_1.skipInvalid) {
                 result[key] = convertedValue;
+            }
         };
         var this_1 = this;
         for (var key in value) {
@@ -44,10 +49,12 @@ var HashValidationRule = (function () {
     };
     HashValidationRule.prototype.must = function (predicate, errorMessage) {
         if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
-        if (!predicate)
+        if (!predicate) {
             throw new Error("predicate is required");
-        if (!errorMessage)
+        }
+        if (!errorMessage) {
             throw new Error("Error message is required");
+        }
         this.mustPredicate = predicate;
         this.mustErrorMessage = errorMessage;
         return this;
@@ -63,6 +70,7 @@ var HashValidationRule = (function () {
     };
     return HashValidationRule;
 }());
+exports.HashValidationRule = HashValidationRule;
 /**
  * Validates object hash (an object each property of which has the same structure).
  */

@@ -25,7 +25,7 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
     }
 
     static mustRule<TIn, TOut>(predicate: (value: TIn, entity?: any, rootEntity?: any) => boolean, errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
-        return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
+        return (value: TIn, reportError: ReportErrorFunction, entity: any, rootEntity: any) => {
             if (!predicate(value, entity, rootEntity)) {
                 reportError(errorMessage);
             }
@@ -35,7 +35,7 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
     }
 
     static transformRule<TIn, TOut>(selector: (value: TIn, entity?: any, rootEntity?: any) => TOut, errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
-        return (value, reportError: ReportErrorFunction, entity, rootEntity) => {
+        return (value: TIn, reportError: ReportErrorFunction, entity: any, rootEntity: any) => {
             try {
                 const result = selector(value, entity, rootEntity);
 
@@ -51,7 +51,7 @@ export abstract class ChainableRuleRunner<TOut> implements IValidationRule<any, 
     }
 
     static requiredRule<TIn, TOut>(errorMessage: string): ValidateAndTransformFunc<TIn, TOut> {
-        return (value, reportError: ReportErrorFunction) => {
+        return (value: TIn, reportError: ReportErrorFunction) => {
             if (value === null || value === undefined) {
                 reportError(errorMessage);
             }
