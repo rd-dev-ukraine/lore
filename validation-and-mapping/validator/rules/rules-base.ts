@@ -1,8 +1,13 @@
 import { ValidationRule, IValidationContext } from "../definitions";
 
-
-export abstract class ChainableRuleRunner<T> implements ValidationRule<T> {
-    rules: ValidationRule<T>[] = [];
+/**
+ * Base class which can contain a set of rules which runs sequentially, 
+ * accumulates errors. 
+ * Each next rule validates conversion result of previous rule if successful or last successful value or input. 
+ */
+export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
+    private rules: ValidationRule<T>[] = [];
+    private stopOnFirstFailureValue = false;
 
     protected abstract clone(): this;
 
@@ -31,6 +36,12 @@ export abstract class ChainableRuleRunner<T> implements ValidationRule<T> {
                         if (success) {
                             value = convertedValue;
                         }
+                        else {
+                            if (this.stopOnFirstFailureValue) {
+                                done(value, false);
+                                return;
+                            }
+                        }
 
                         allRulesValid = allRulesValid && success;
 
@@ -56,6 +67,7 @@ export abstract class ChainableRuleRunner<T> implements ValidationRule<T> {
 
         const copy = this.clone();
 
+        copy.stopOnFirstFailureValue = this.stopOnFirstFailureValue;
         copy.rules = [...this.rules, rule];
         return copy;
     }

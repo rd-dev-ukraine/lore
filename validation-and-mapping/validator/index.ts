@@ -1,11 +1,14 @@
-import { IValidationRule, ValidationResult } from "./definitions";
+import { ValidationRule, ValidationResult } from "./definitions";
 import ErrorAccumulator from "./error-accumulator";
 import ValidationContext from "./validation-context";
 
 export * from "./definitions";
 export * from "./rules";
 
-export function validate<TIn, TOut>(value: TIn, ...validators: IValidationRule<TIn, TOut>[]): ValidationResult<TOut> {
+export function validate<T>(value: any, done: (result: ValidationResult<T>) => void, ...validators: ValidationRule<T>[]): void {
+    if (!done) {
+        throw new Error("Done callback is required.");
+    }
     if (!validators || !validators.length) {
         throw new Error("At least one validator is required");
     }
@@ -13,20 +16,43 @@ export function validate<TIn, TOut>(value: TIn, ...validators: IValidationRule<T
     const errorAccumulator = new ErrorAccumulator();
     const validationContext = new ValidationContext("", errorAccumulator);
 
-    const result = <TOut><any>validators.reduce((val, validator) => <TIn><any>validator.run(val, validationContext, val, val) || value, value);
+    let val = value;
+    const runValidator = () => {
+        const validator = validators.shift();
 
-    const errors = errorAccumulator.errors();
+        if (validator) {
+            validator.run(validationContext,
+                (convertedValue, success) => {
+                    if (success) {
+                        val = convertedValue;
+                    }
 
-    if (Object.keys(errors).length) {
-        return {
-            valid: false,
-            value: null,
-            errors: errors
-        };
+                    // Run next validator recursively.
+                    runValidator();
+                },
+                value,
+                value,
+                value);
+        }
+        else {
+
+            if (errorAccumulator.valid()) {
+                const validationResult: ValidationResult<T> = {
+                    valid: true,
+                    convertedValue: val
+                };
+                done(validationResult);
+            }
+            else {
+                const validationResult: ValidationResult<T> = {
+                    valid: false,
+                    convertedValue: null,
+                    errors: errorAccumulator.errors()
+                };
+                done(validationResult);
+            }
+        }
+        
+        runValidator();
     }
-
-    return {
-        valid: true,
-        value: result
-    };
 }
