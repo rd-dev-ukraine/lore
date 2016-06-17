@@ -1,4 +1,4 @@
-import { IValidationRule, ValidateAndTransformFunc, ReportErrorFunction } from "../definitions";
+import { ValidateAndTransformFunc, ReportErrorFunction } from "../definitions";
 import { ChainableRuleRunner } from "./rules-base";
 
 export class StringRules extends ChainableRuleRunner<string> {
@@ -66,6 +66,7 @@ export function num(errorMessage: string = "Value is not a valid number"): Numbe
     return new NumberRules().withRule(NumberRules.isNumberRule(errorMessage));
 }
 
-export function any<T>(predicate: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): AnyRules<T> {
+export function any<T>(predicate?: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): AnyRules<T> {
+    predicate = predicate || (v => true);
     return new AnyRules<T>().must(predicate, errorMessage);
 }

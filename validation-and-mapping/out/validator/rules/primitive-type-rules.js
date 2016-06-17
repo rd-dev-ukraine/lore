@@ -80,6 +80,7 @@ function num(errorMessage) {
 exports.num = num;
 function any(predicate, errorMessage) {
     if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
+    predicate = predicate || (function (v) { return true; });
     return new AnyRules().must(predicate, errorMessage);
 }
 exports.any = any;
