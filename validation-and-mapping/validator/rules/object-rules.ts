@@ -28,12 +28,10 @@ class ObjectValidationRuleCore<T extends IObject> implements ValidationRule<T> {
         const result = <T>{};
 
         for (let property in this.properties) {
-            if (inputValue.hasOwnProperty(property)) {
-                const validator = this.properties[property];
-                const sourceValue = inputValue[property];
+            const validator = this.properties[property];
+            const sourceValue = inputValue[property];
 
-                result[property] = validator.runParse(sourceValue, inputValue, rootObject);
-            }
+            result[property] = validator.runParse(sourceValue, inputValue, rootObject);
         }
 
         if (this.expandable) {
@@ -56,13 +54,11 @@ class ObjectValidationRuleCore<T extends IObject> implements ValidationRule<T> {
 
         const propertyRules: Array<{ property: string; validator: ValidationRule<any>; }> = [];
         for (let property in this.properties) {
-            if (this.properties.hasOwnProperty(property)) {
-                const validator = this.properties[property];
-                propertyRules.push({
-                    property,
-                    validator
-                })
-            }
+            const validator = this.properties[property];
+            propertyRules.push({
+                property,
+                validator
+            });
         }
 
         let allValid = true;
