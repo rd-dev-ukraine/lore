@@ -106,14 +106,15 @@ var NumberRules = (function (_super) {
             throw new Error("Error message is required");
         }
         return this.checkAndConvert(function (done, value) {
-            if (value !== null && value !== undefined) {
-                if (typeof value !== "number") {
-                    done(errorMessage);
-                }
-            }
-            else {
+            if (value === null || value === undefined) {
                 done();
+                return;
             }
+            if (typeof value !== "number") {
+                done(errorMessage);
+                return;
+            }
+            done();
         });
     };
     /**

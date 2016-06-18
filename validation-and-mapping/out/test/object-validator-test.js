@@ -98,6 +98,32 @@ exports.default = function () {
             }); });
         });
     });
+    describe("for secondary level nested object", function () {
+        var v = validator_1.rules.obj({
+            id: validator_1.rules.num().required(),
+            delivery: validator_1.rules.obj({
+                price: validator_1.rules.num(),
+                address: validator_1.rules.obj({
+                    code: validator_1.rules.num().required("Code is required."),
+                    addressLine1: validator_1.rules.str()
+                }).required("Address is required")
+            }).required()
+        });
+        it("must correct build path for invalid most nested object", function (done) {
+            validator_1.validateWithPromise({
+                id: 23,
+                delivery: {
+                    price: 5.4,
+                    address: {}
+                }
+            }, v).then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    "delivery.address.code": ["Code is required."]
+                });
+            }); });
+        });
+    });
     describe("for required nested objects", function () {
         var objectStructure = validator_1.rules.obj({
             id: validator_1.rules.num().required().must(function (v) { return v > 0; }, "ID must be greater than zero"),
@@ -169,7 +195,6 @@ exports.default = function () {
                 });
             }); })
                 .catch(function (err) {
-                console.dir(err);
                 done("Must pass!");
             });
         });
@@ -190,67 +215,85 @@ exports.default = function () {
             }); });
         });
     });
-    // describe("for expandable object", () => {
-    //     const structure = expandableObject({
-    //         id: num().required().must(v => v > 10),
-    //         title: str().required().must(v => v.length < 20)
-    //     });
-    //     it("should preserve non-validatable properties", () => {
-    //         const validObject = {
-    //             id: 20,
-    //             title: "test",
-    //             delivery: {
-    //                 price: 20,
-    //                 address: "test address"
-    //             }
-    //         };
-    //         const result = validate(validObject, structure);
-    //         result.valid.should.be.true();
-    //         result.value["id"].should.equal(20);
-    //         result.value["title"].should.equal("test");
-    //         result.value["delivery"].should.equal(validObject.delivery);
-    //     });
-    // });
-    // describe("for multiple validators", () => {
-    //     const idValidator = expandableObject({
-    //         id: num().required().transform(v => v * 10)
-    //     });
-    //     const titleValidator = expandableObject({
-    //         title: str().required().must(t => t.length < 20)
-    //     });
-    //     const idValidityValidator = expandableObject({
-    //         id: num().required().must(v => v < 100, "Id too large")
-    //     });
-    //     it("valid object must pass validator chain", () => {
-    //         const validObject = {
-    //             id: 5,
-    //             title: "test"
-    //         };
-    //         const result = validate(validObject, idValidator, titleValidator, idValidityValidator);
-    //         result.valid.should.be.true();
-    //         result.value.should.deepEqual({
-    //             id: 50,
-    //             title: "test"
-    //         });
-    //     });
-    //     it("must stop if failed on first validator", () => {
-    //         const invalidObject = {
-    //             id: "sdfsdf",
-    //             title: "test"
-    //         };
-    //         const result = validate(invalidObject, idValidator, titleValidator, idValidityValidator);
-    //         result.valid.should.be.false();
-    //         should(result.errors["id"][0]).equal("Value is not a valid number");
-    //     });
-    //     it("validators must validate data converted by previous validator", () => {
-    //         const invalidObject = {
-    //             id: 40,
-    //             title: "test"
-    //         };
-    //         const result = validate(invalidObject, idValidator, titleValidator, idValidityValidator);
-    //         result.valid.should.be.false();
-    //         should(result.errors["id"][0]).equal("Id too large");
-    //     });
-    // });
+    describe("for expandable object", function () {
+        var structure = validator_1.rules.obj({
+            id: validator_1.rules.num().required().must(function (v) { return v > 10; }),
+            title: validator_1.rules.str().required().must(function (v) { return v.length < 20; })
+        }).expandable();
+        it("should preserve non-validatable properties", function (done) {
+            var validObject = {
+                id: 20,
+                title: "test",
+                delivery: {
+                    price: 20,
+                    address: "test address"
+                }
+            };
+            validator_1.validateWithPromise(validObject, structure)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.deepEqual({
+                    id: 20,
+                    title: "test",
+                    delivery: {
+                        price: 20,
+                        address: "test address"
+                    }
+                });
+            }); })
+                .catch(function () { return done("Must pass"); });
+        });
+    });
+    describe("for multiple validators", function () {
+        var idValidator = validator_1.rules.obj({
+            id: validator_1.rules.num()
+                .required()
+        }).expandable();
+        var titleValidator = validator_1.rules.obj({
+            title: validator_1.rules.str().required().must(function (t) { return t.length < 20; })
+        }).expandable();
+        var idValidityValidator = validator_1.rules.obj({
+            id: validator_1.rules.num(false)
+                .required()
+                .must(function (v) {
+                return isNaN(v) || v < 100;
+            }, "Id too large")
+        }).expandable();
+        it("valid object must pass validator chain", function (done) {
+            var validObject = {
+                id: 5,
+                title: "test"
+            };
+            validator_1.validateWithPromise(validObject, idValidator, titleValidator, idValidityValidator)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+            }); })
+                .catch(function () { return done("Must pass"); });
+        });
+        it("must not stop if failed on first validator", function (done) {
+            var invalidObject = {
+                id: "sdfsdf",
+                title: "test"
+            };
+            validator_1.validateWithPromise(invalidObject, idValidator, titleValidator, idValidityValidator)
+                .then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    "id": ["Value is not a valid number", "Value is not a valid number"]
+                });
+            }); });
+        });
+        it("validators must validate data converted by previous validator", function (done) {
+            var invalidObject = {
+                id: "400",
+                title: "test"
+            };
+            validator_1.validateWithPromise(invalidObject, idValidator, titleValidator, idValidityValidator)
+                .then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    id: ["Id too large"]
+                });
+            }); });
+        });
+    });
 };
 //# sourceMappingURL=object-validator-test.js.map

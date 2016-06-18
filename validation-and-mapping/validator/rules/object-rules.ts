@@ -107,7 +107,7 @@ export class ObjectValidationRule<T extends IObject> extends EnclosingValidation
     }
 
     expandable(): this {
-        return <this>new ObjectValidationRule<T>(this.properties, false);
+        return <this>new ObjectValidationRule<T>(this.properties, true);
     }
 }
 

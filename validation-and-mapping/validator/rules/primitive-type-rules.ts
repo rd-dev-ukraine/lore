@@ -107,14 +107,17 @@ export class NumberRules extends SequentialRuleSet<number> {
 
         return this.checkAndConvert(
             (done, value) => {
-                if (value !== null && value !== undefined) {
-                    if (typeof value !== "number") {
-                        done(errorMessage);
-                    }
-                }
-                else {
+                if (value === null || value === undefined) {
                     done();
+                    return;
                 }
+
+                if (typeof value !== "number") {
+                    done(errorMessage);
+                    return;
+                }
+
+                done();
             }
         );
     }
@@ -151,7 +154,6 @@ export class NumberRules extends SequentialRuleSet<number> {
                 return converted;
             });
     }
-
 }
 
 

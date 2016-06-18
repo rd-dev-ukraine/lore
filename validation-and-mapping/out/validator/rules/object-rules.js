@@ -76,7 +76,7 @@ var ObjectValidationRule = (function (_super) {
         return new ObjectValidationRule(this.properties, this.isExpandable);
     };
     ObjectValidationRule.prototype.expandable = function () {
-        return new ObjectValidationRule(this.properties, false);
+        return new ObjectValidationRule(this.properties, true);
     };
     return ObjectValidationRule;
 }(rules_base_1.EnclosingValidationRuleBase));

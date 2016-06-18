@@ -199,7 +199,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
                 done();
             }
         })
-    }    
+    }
 }
 
 /** 
