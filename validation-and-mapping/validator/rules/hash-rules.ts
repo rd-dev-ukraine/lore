@@ -10,7 +10,7 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
     constructor(
         private elementValidationRule: ValidationRule<TElement>,
         private skipInvalidElements: boolean,
-        private filterHashFn: (key: string, value?: TElement) => boolean) {
+        private filterHashFn: (key: string, value?: TElement, rawValue?: any) => boolean) {
 
         if (!elementValidationRule) {
             throw new Error("Element validation rule required");
@@ -25,7 +25,10 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
 
         for (let key in hash) {
             const inputValue = hash[key];
-            result[key] = this.elementValidationRule.runParse(inputValue, hash, rootObject);
+            const parsedValue = this.elementValidationRule.runParse(inputValue, hash, rootObject);
+            if (!this.filterHashFn || this.filterHashFn(key, parsedValue, inputValue)) {
+                result[key] = parsedValue;
+            }
         }
 
         return result;
@@ -40,12 +43,7 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
 
         const hashKeys: string[] = [];
         for (let key in hash) {
-            if (this.filterHashFn && !this.filterHashFn(key, hash[key])) {
-                delete hash[key];
-            }
-            else {
-                hashKeys.push(hash);
-            }
+            hashKeys.push(hash);
         }
 
         let valid = true;
@@ -60,7 +58,9 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
                     keyContext,
                     success => {
                         if (this.skipInvalidElements) {
-                            delete hash[key];
+                            if (!success) {
+                                delete hash[key];
+                            }
                         }
                         else {
                             valid = valid && success;
@@ -124,7 +124,7 @@ export class HashValidationRule<TElement> extends EnclosingValidationRuleBase<IH
 
 
 /**
- * Validates object hash (an object each property of which has the same structure).
+ * Validates a map of objects with the same structure.
  */
 export function hash<TElement>(elementValidationRule: ValidationRule<TElement>): HashValidationRule<TElement> {
     if (!elementValidationRule) {

@@ -1,76 +1,76 @@
-import { IValidationRule } from "../definitions";
+import { ValidationRule, IValidationContext } from "../definitions";
 
-import ValidationContext from "../validation-context";
 
-export class ArrayValidationRule<TInElement, TOutElement> implements IValidationRule<TInElement[], TOutElement[]> {
-    private filter: (elem: TInElement, entity?: any, root?: any) => boolean;
-    private keepOnlyValidElements: boolean = false;
+export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElement[]> {
 
     constructor(
-        private elementValidator: IValidationRule<TInElement, TOutElement>,
-        private passNullOrEmptyArray: boolean,
-        private nullOrEmptyArrayErrorMessage?: string) {
+        private elementValidationRule: ValidationRule<TElement>,
+        private skipInvalidElements: boolean,
+        private filterElementFn: (element: TElement, index?: number) => boolean) {
 
-        if (!this.passNullOrEmptyArray && !this.nullOrEmptyArrayErrorMessage) {
-            throw new Error("Null or empty array error message required is null array is not passed");
+        if (!elementValidationRule) {
+            throw new Error("Element validator is required.");
         }
     }
 
-    run(value: TInElement[], validationContext: ValidationContext, entity: any, root: any): TOutElement[] {
-        if (value === null || value === undefined || value.length === 0) {
-            if (!this.passNullOrEmptyArray) {
-                validationContext.reportError(this.nullOrEmptyArrayErrorMessage);
-            }
-
-            return <TOutElement[]><any>value;
+    runParse(array: any[], validatingObject?: any, rootObject?: any): TElement[] {
+        if (array === null || array === undefined) {
+            return array;
         }
-
-        const result: TOutElement[] = [];
-
-        for (let i = 0; i < value.length; i++) {
-            const elem = value[i];
-
-            if (this.filter && !this.filter(elem, value, root)) {
-                continue;
-            }
-
-            let valid = true;
-
-            const nestedValidationContext = validationContext.index(i, () => {
-                valid = false;
-                return !this.keepOnlyValidElements;
-            });
-
-            const convertedValue = this.elementValidator.run(elem, nestedValidationContext, value, root);
-            if (valid || !this.keepOnlyValidElements) {
-                result.push(convertedValue);
-            }
-
-        }
-
-        return result;
+        // We don't filter array elements here because we need to keep source indexes in validation context errors.
+        return array.map(e => this.elementValidationRule.runParse(e, array, rootObject));
     }
 
-    keepOnlyValid(onlyValid: boolean = true): this {
-        this.keepOnlyValidElements = onlyValid;
-        return this;
-    }
 
-    filterElements(predicate: (elem: TInElement, entity?: any, root?: any) => boolean): this {
-        if (!predicate) {
-            throw new Error("predicate is required");
+    runValidate(
+        context: IValidationContext,
+        doneCallback: (success: boolean) => void,
+        array: any[],
+        validatingObject?: any,
+        rootObject?: any): void {
+
+        let srcIndex = 0;
+        let index = 0;
+
+        let valid = true;
+        const run = () => {
+            if (index < array.length) {
+
+                const element = array[index];
+
+                if (this.filterElementFn && !this.filterElementFn(element, srcIndex)) {
+                    array.splice(index, 1);
+                    srcIndex++;
+                }
+                else {
+                    const elementContext = context.index(srcIndex);
+
+                    this.elementValidationRule.runValidate(
+                        elementContext,
+                        success => {
+                            if (this.skipInvalidElements) {
+                                if (!success) {
+                                    array.splice(index, 1);
+                                }
+                            }
+                            else {
+                                valid = valid && success;
+                                index++;
+                            }
+
+                            srcIndex++;
+                        },
+                        element,
+                        array,
+                        rootObject);
+                }
+            }
+            else {
+                doneCallback(valid);
+            }
         }
 
-        this.filter = predicate;
-
-        return this;
+        run();
     }
 }
 
-export function arr<TInElement, TOutElement>(elementValidationRule: IValidationRule<TInElement, TOutElement>, nullValueErrorMessage: string = "Value is required."): ArrayValidationRule<TInElement, TOutElement> {
-    return new ArrayValidationRule<TInElement, TOutElement>(elementValidationRule, true, nullValueErrorMessage);
-}
-
-export function arrOptional<TInElement, TOutElement>(elementValidator: IValidationRule<TInElement, TOutElement>): ArrayValidationRule<TInElement, TOutElement> {
-    return new ArrayValidationRule<TInElement, TOutElement>(elementValidator, false);
-}
