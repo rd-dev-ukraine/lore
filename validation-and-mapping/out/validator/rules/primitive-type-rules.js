@@ -17,73 +17,79 @@ var StringRules = (function (_super) {
      * Checks if value has string type. Undefined value is passed as correct.
      * This rule is applied automatically, don't add call this method manually.
      */
-    StringRules.prototype.isString = function (errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value must be a string."; }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+    StringRules.prototype.isString = function (options) {
+        options = rules_base_1.ensureRuleOptions(options, {
+            errorMessage: "Value must be a string.",
+            stopOnFailure: true
+        });
         return this.checkAndConvert(function (done, value) {
             if (value && typeof value !== "string") {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
             }
-        });
+        }, null, true, options.stopOnFailure);
     };
-    StringRules.prototype.parseString = function (errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value must be a string."; }
+    StringRules.prototype.parseString = function (options) {
+        options = rules_base_1.ensureRuleOptions(options, {
+            errorMessage: "Value must be a string.",
+            stopOnFailure: true
+        });
         return this.parse(function (v) {
             if (!v) {
                 return "";
             }
             return "" + v;
-        }, errorMessage);
+        }, options);
     };
-    StringRules.prototype.notEmpty = function (errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value can not be empty."; }
+    StringRules.prototype.notEmpty = function (options) {
+        options = rules_base_1.ensureRuleOptions(options, {
+            errorMessage: "Value can not be empty.",
+            stopOnFailure: true
+        });
         return this.checkAndConvert(function (done, parsedValue) {
             if (!parsedValue || parsedValue.trim().length === 0) {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
             }
-        });
+        }, null, false, options.stopOnFailure);
     };
-    StringRules.prototype.maxLength = function (maxLength, errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value is too long."; }
+    StringRules.prototype.maxLength = function (maxLength, options) {
         if (maxLength <= 0) {
             throw new Error("Max length must be greater than zero.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+        options = rules_base_1.ensureRuleOptions(options, {
+            errorMessage: "Value is too long.",
+            stopOnFailure: false
+        });
         return this.checkAndConvert(function (done, value) {
             if (value && value.length > maxLength) {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
             }
-        });
+        }, null, false, options.stopOnFailure);
     };
-    StringRules.prototype.minLength = function (minLength, errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value is too short."; }
+    StringRules.prototype.minLength = function (minLength, options) {
         if (minLength <= 0) {
             throw new Error("Min length must be greater than zero.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+        options = rules_base_1.ensureRuleOptions(options, {
+            errorMessage: "Value is too short.",
+            stopOnFailure: false
+        });
         return this.checkAndConvert(function (done, value) {
             if (value && value.length < minLength) {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
             }
-        });
+        }, null, false, options.stopOnFailure);
     };
     return StringRules;
 }(rules_base_1.SequentialRuleSet));

@@ -25,6 +25,11 @@ export interface ValidationResult<T> {
     errors?: ValidationErrorHash;
 }
 
+export interface RuleOptions {
+    errorMessage?: string;
+    stopOnFailure?: boolean; 
+}
+
 /**
  * Validation context allows reporting errors for current validation stage and
  * creation nested context of different type.
@@ -52,6 +57,10 @@ export interface IValidationContext {
  * This enables to pass parsed values as validatingObject parameter. 
  */
 export interface ValidationRule<T> {
+    /**
+     * Gets a value determines whether next rules must be run if current rules failed validation stage.
+     */
+    stopOnFailure: boolean;
 
     /**
      * Parse value before performing a validation.

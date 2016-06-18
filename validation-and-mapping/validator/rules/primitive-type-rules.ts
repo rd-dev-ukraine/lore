@@ -1,4 +1,5 @@
-import { SequentialRuleSet } from "./rules-base";
+import { RuleOptions } from "../definitions";
+import { SequentialRuleSet, ensureRuleOptions } from "./rules-base";
 
 export class StringRules extends SequentialRuleSet<string> {
 
@@ -10,83 +11,109 @@ export class StringRules extends SequentialRuleSet<string> {
      * Checks if value has string type. Undefined value is passed as correct. 
      * This rule is applied automatically, don't add call this method manually.
      */
-    isString(errorMessage: string = "Value must be a string."): this {
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+    isString(options?: RuleOptions): this {
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value must be a string.",
+            stopOnFailure: true
+        });
 
         return this.checkAndConvert(
             (done, value) => {
                 if (value && typeof value !== "string") {
-                    done(errorMessage);
+                    done(options.errorMessage);
                 }
                 else {
                     done();
                 }
-            }
-        );
+            },
+            null,
+            true,
+            options.stopOnFailure);
     }
 
-    parseString(errorMessage: string = "Value must be a string."): this {
-        return this.parse(v => {
-            if (!v) {
-                return "";
-            }
+    parseString(options?: RuleOptions): this {
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value must be a string.",
+            stopOnFailure: true
+        })
 
-            return "" + v;
-        }, errorMessage);
+        return this.parse(
+            v => {
+                if (!v) {
+                    return "";
+                }
+
+                return "" + v;
+            },
+            options);
     }
 
-    notEmpty(errorMessage: string = "Value can not be empty."): this {
+    notEmpty(options?: RuleOptions): this {
+
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value can not be empty.",
+            stopOnFailure: true
+        });
+
         return this.checkAndConvert(
             (done, parsedValue) => {
                 if (!parsedValue || parsedValue.trim().length === 0) {
-                    done(errorMessage);
+                    done(options.errorMessage);
                 }
                 else {
                     done();
                 }
-            });
+            },
+            null,
+            false,
+            options.stopOnFailure);
     }
 
-    maxLength(maxLength: number, errorMessage: string = "Value is too long."): this {
+    maxLength(maxLength: number, options?: RuleOptions): this {
         if (maxLength <= 0) {
             throw new Error("Max length must be greater than zero.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value is too long.",
+            stopOnFailure: false
+        });
 
         return this.checkAndConvert(
             (done, value) => {
                 if (value && value.length > maxLength) {
-                    done(errorMessage);
+                    done(options.errorMessage);
                 }
                 else {
                     done();
                 }
-            }
-        );
+            },
+            null,
+            false,
+            options.stopOnFailure);
     }
 
-    minLength(minLength: number, errorMessage: string = "Value is too short."): this {
+    minLength(minLength: number, options?: RuleOptions): this {
         if (minLength <= 0) {
             throw new Error("Min length must be greater than zero.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value is too short.",
+            stopOnFailure: false
+        });
 
         return this.checkAndConvert(
             (done, value) => {
                 if (value && value.length < minLength) {
-                    done(errorMessage);
+                    done(options.errorMessage);
                 }
                 else {
                     done();
                 }
-            }
-        );
+            },
+            null,
+            false,
+            options.stopOnFailure);
     }
 }
 

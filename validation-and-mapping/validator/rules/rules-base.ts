@@ -1,5 +1,82 @@
-import { ValidationRule, IValidationContext } from "../definitions";
+import { ValidationRule, IValidationContext, RuleOptions } from "../definitions";
 
+export function ensureRuleOptions(options: RuleOptions, defaultRuleOptions: RuleOptions): RuleOptions {
+    options = options || defaultRuleOptions;
+    if (!options) {
+        throw new Error("Options is required");
+    }
+
+    const result: RuleOptions = {
+        errorMessage: options.errorMessage || defaultRuleOptions.errorMessage,
+        stopOnFailure: options.stopOnFailure || defaultRuleOptions.stopOnFailure || false
+    };
+
+    if (!result.errorMessage) {
+        throw new Error("Error message is required.");
+    }
+
+    return result;
+}
+
+/** 
+ * Combines rules array into single rule which runs all rules.
+ * Parsing stage is run for all rules one by one using previous rule result as input for next rule.
+ * Validation stage is run for all rules sequentially but stops if rule with stopOnFailure = true is failed.  
+ */
+export function combineRules<T>(...rules: ValidationRule<T>[]): ValidationRule<T> {
+    rules = rules || [];
+
+    return {
+        stopOnFailure: false,
+        /** Runs parsing on all rules. */
+        runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
+            return rules.reduce((currentValue, rule) => rule.runParse(currentValue, validatingObject, rootObject), inputValue);
+        },
+        /** Runs all chained rules. */
+        runValidate(context: IValidationContext,
+            doneCallback: (success: boolean) => void,
+            parsedValue: any,
+            validatingObject?: any,
+            rootObject?: any): void {
+            if (!context) {
+                throw new Error("context is required.");
+            }
+            if (!doneCallback) {
+                throw new Error("done callback is required.");
+            }
+
+            let allRulesValid = true;
+            const rulesToRun = [...rules];
+
+            const runRule = () => {
+                const rule = rulesToRun.shift();
+                if (rule) {
+                    rule.runValidate(
+                        context,
+                        (success) => {
+                            if (!success && rule.stopOnFailure) {
+                                doneCallback(false);
+                                return;
+                            }
+
+                            allRulesValid = allRulesValid && success;
+
+                            // Runs next rule recursively
+                            runRule();
+                        },
+                        parsedValue,
+                        validatingObject,
+                        rootObject);
+                }
+                else {
+                    doneCallback(allRulesValid);
+                }
+            };
+
+            runRule();
+        }
+    };
+}
 
 /**
  * Base class which can contain a set of rules which runs sequentially, 
@@ -8,22 +85,33 @@ import { ValidationRule, IValidationContext } from "../definitions";
  */
 export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
     private rules: ValidationRule<T>[] = [];
-    private stopOnFirstFailureValue = false;
+
+    stopOnFailure = false;
 
     protected abstract clone(): SequentialRuleSet<T>;
 
+    stopOnFail(stopOnFailure: boolean = true): this {
+        const copy = this.clone();
+
+        copy.stopOnFailure = stopOnFailure;
+        copy.rules = this.rules;
+
+        return <this>copy;
+    }
+
     /** Runs parsing on all rules. */
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
-        return this.rules
-            .reduce((currentValue, rule) => rule.runParse(currentValue, validatingObject, rootObject), inputValue);
+        return combineRules(...this.rules).runParse(inputValue, validatingObject, rootObject);
     }
 
     /** Runs all chained rules. */
-    runValidate(context: IValidationContext,
+    runValidate(
+        context: IValidationContext,
         doneCallback: (success: boolean) => void,
         parsedValue: any,
         validatingObject?: any,
         rootObject?: any): void {
+
         if (!context) {
             throw new Error("context is required.");
         }
@@ -31,35 +119,13 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
             throw new Error("done callback is required.");
         }
 
-        let allRulesValid = true;
-        const rulesToRun = [...this.rules];
-
-        const runRule = () => {
-            const rule = rulesToRun.shift();
-            if (rule) {
-                rule.runValidate(
-                    context,
-                    (success) => {
-                        if (!success && this.stopOnFirstFailureValue) {
-                            doneCallback(false);
-                            return;
-                        }
-
-                        allRulesValid = allRulesValid && success;
-
-                        // Runs next rule recursively
-                        runRule();
-                    },
-                    parsedValue,
-                    validatingObject,
-                    rootObject);
-            }
-            else {
-                doneCallback(allRulesValid);
-            }
-        };
-
-        runRule();
+        combineRules(...this.rules).runValidate(
+            context,
+            doneCallback,
+            parsedValue,
+            validatingObject,
+            rootObject
+        );
     }
 
     protected withRule(rule: ValidationRule<T>, putRuleFirst: boolean = false): this {
@@ -69,7 +135,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
         const copy = this.clone();
 
-        copy.stopOnFirstFailureValue = this.stopOnFirstFailureValue;
+        copy.stopOnFailure = this.stopOnFailure;
 
         if (putRuleFirst) {
             copy.rules = [rule, ...this.rules];
@@ -88,7 +154,8 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
     checkAndConvert(
         validationFn: (doneCallback: (errorMessage?: string) => void, parsedValue: T, validatingObject?: any, rootObject?: any) => void,
         parseFn?: (inputValue: any, validatingObject?: any, rootObject?: any) => T,
-        putRuleFirst: boolean = false) {
+        putRuleFirst: boolean = false,
+        stopOnFailure = false) {
 
         if (!validationFn) {
             throw new Error("Validation function is required.");
@@ -98,6 +165,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
         return this.withRule(
             {
+                stopOnFailure: stopOnFailure || false,
 
                 runParse: parseFn,
 
@@ -127,22 +195,21 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
     }
 
     /** Fails if input value is null or undefined. */
-    required(errorMessage: string = "Value is required."): this {
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+    required(options?: RuleOptions): this {
+        options = ensureRuleOptions(options, { errorMessage: "Value is required.", stopOnFailure: true });
 
         return this.checkAndConvert(
             (done, input) => {
                 if (input === null || input === undefined) {
-                    done(errorMessage);
+                    done(options.errorMessage);
                 }
                 else {
                     done();
                 }
             },
             null,
-            true);
+            true,
+            options.stopOnFailure);
     }
 
     /** 
@@ -150,20 +217,22 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
      * Parse rules runs first.
      * If transformation function returns null or undefined or throws an error fails with specified error message.
      */
-    parse(convertFn: (inputValue: any, validatingObject?: any, rootObject?: any) => T, errorMessage: string = "Conversion failed"): this {
+    parse(convertFn: (inputValue: any, validatingObject?: any, rootObject?: any) => T, options?: RuleOptions): this {
         if (!convertFn) {
             throw new Error("Transformation function is required.")
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+
+        options = ensureRuleOptions(options, {
+            errorMessage: "Conversion failed.",
+            stopOnFailure: true
+        })
 
         const failResult = new Object();
 
         return this.checkAndConvert(
             (done, convertedValue, obj, root) => {
                 if (convertedValue == failResult) {
-                    done(errorMessage);
+                    done(options.errorMessage);
                 }
                 else {
                     done();
@@ -181,24 +250,33 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
                 catch (e) {
                     return <T><any>failResult;
                 }
-            });
+            },
+            false,
+            options.stopOnFailure);
     }
 
-    must(predicate: (value: T, validatingObject?: any, rootObject?: any) => boolean, errorMessage: string = "Value is invalid"): this {
+    must(predicate: (value: T, validatingObject?: any, rootObject?: any) => boolean, options?: RuleOptions): this {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
-        return this.checkAndConvert((done, input, obj, root) => {
-            if (!predicate(input, obj, root)) {
-                done(errorMessage);
-            }
-            else {
-                done();
-            }
-        })
+
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value is not valid.",
+            stopOnFailure: false
+        });
+
+        return this.checkAndConvert(
+            (done, input, obj, root) => {
+                if (!predicate(input, obj, root)) {
+                    done(options.errorMessage);
+                }
+                else {
+                    done();
+                }
+            },
+            null,
+            false,
+            options.stopOnFailure);
     }
 }
 
@@ -216,6 +294,8 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
     private rulesBefore: ValidationRule<T>[] = [];
     private rulesAfter: ValidationRule<T>[] = [];
 
+    stopOnFailure = false;
+
     constructor(protected rule: ValidationRule<T>) {
         if (!rule) {
             throw new Error("Validation rule is required.");
@@ -223,7 +303,7 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
     }
 
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
-        return this.rule.runParse(inputValue, validatingObject, rootObject);
+        return combineRules(this.rule).runParse(inputValue, validatingObject, rootObject);
     }
 
     runValidate(
@@ -239,75 +319,34 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
             ...(this.rulesAfter || [])
         ];
 
-        this.runRuleSet(
-            all,
+        combineRules(...all).runValidate(
             context,
             doneCallback,
             obj,
             validatingObject,
-            rootObject
-        );
+            rootObject);
+
     }
 
-    private runRuleSet(
-        rules: ValidationRule<T>[],
-        context: IValidationContext,
-        doneCallback: (success: boolean) => void,
-        obj: any,
-        validatingObject?: any,
-        rootObject?: any) {
+    stopOnFail(stopOnFailure: boolean = true): this {
+        const copy = this.clone();
 
-        const rulesToRun = [...rules];
+        copy.stopOnFailure = stopOnFailure;
 
-        const run = () => {
-            const rule = rulesToRun.shift();
-            if (rule) {
-                rule.runValidate(
-                    context,
-                    success => {
-                        if (!success) {
-                            doneCallback(false);
-                            return;
-                        }
-
-                        run();
-                    },
-                    obj,
-                    validatingObject,
-                    rootObject
-                );
-            }
-            else {
-                doneCallback(true);
-            }
-
-        };
-
-        run();
-    }
-
-    protected abstract clone(): this;
-
-    private copy(): this {
-        const result = this.clone();
-
-        result.rulesBefore = [...this.rulesBefore];
-        result.rulesAfter = [...this.rulesAfter];
-
-        return result;
+        return <this>copy;
     }
 
     /** Disables null object. */
-    required(errorMessage = "Object is required."): this {
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
+    required(options?: RuleOptions): this {
+
+        options = ensureRuleOptions(options, {
+            errorMessage: "Object is required.",
+            stopOnFailure: true
+        });
 
         const result = this.copy();
 
-        result.rulesBefore = [
-            any<T>(v => v !== null && v !== undefined, errorMessage),
-            ...result.rulesBefore];
+        result.rulesBefore = [any<T>(v => v !== null && v !== undefined, options), ...result.rulesBefore];
 
         return result;
     }
@@ -337,30 +376,39 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
     }
 
 
-    before(predicate: (obj: T, validatingObject?: any, rootObject?: any) => boolean, errorMessage = "Object is not valid."): this {
+    before(predicate: (obj: T, validatingObject?: any, rootObject?: any) => boolean, options?: RuleOptions): this {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
-
-        return this.runBefore(any<T>(predicate, errorMessage));
+        
+        return this.runBefore(any<T>(predicate, options));
     }
 
-    after(predicate: (obj: T, validatingObject?: any, rootObject?: any) => boolean, errorMessage = "Object is not valid."): this {
+    after(predicate: (obj: T, validatingObject?: any, rootObject?: any) => boolean, options?: RuleOptions): this {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+        
+        return this.runAfter(any<T>(predicate, options));
+    }
 
-        return this.runAfter(any<T>(predicate, errorMessage));
+    protected abstract clone(): this;
+
+    private copy(): this {
+        const result = this.clone();
+
+        result.rulesBefore = [...this.rulesBefore];
+        result.rulesAfter = [...this.rulesAfter];
+        result.stopOnFailure = this.stopOnFailure;
+
+        return result;
     }
 }
 
 export class EmptyRule<T> implements ValidationRule<T> {
+    
+    stopOnFailure = false;
+
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
         return <T>inputValue;
     }
@@ -382,11 +430,8 @@ export class AnyRules<T> extends SequentialRuleSet<T> {
 }
 
 /** Validates any value using given predicate. */
-export function any<T>(predicate?: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): AnyRules<T> {
-    if (!errorMessage) {
-        throw new Error("Error message is required");
-    }
+export function any<T>(predicate?: (value: T, entity?: any, rootEntity?: any) => boolean, options?: RuleOptions): AnyRules<T> {
 
     predicate = predicate || (v => true);
-    return new AnyRules<T>().must(predicate, errorMessage);
+    return new AnyRules<T>().must(predicate, options);
 }

@@ -4,6 +4,70 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+function ensureRuleOptions(options, defaultRuleOptions) {
+    options = options || defaultRuleOptions;
+    if (!options) {
+        throw new Error("Options is required");
+    }
+    var result = {
+        errorMessage: options.errorMessage || defaultRuleOptions.errorMessage,
+        stopOnFailure: options.stopOnFailure || defaultRuleOptions.stopOnFailure || false
+    };
+    if (!result.errorMessage) {
+        throw new Error("Error message is required.");
+    }
+    return result;
+}
+exports.ensureRuleOptions = ensureRuleOptions;
+/**
+ * Combines rules array into single rule which runs all rules.
+ * Parsing stage is run for all rules one by one using previous rule result as input for next rule.
+ * Validation stage is run for all rules sequentially but stops if rule with stopOnFailure = true is failed.
+ */
+function combineRules() {
+    var rules = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        rules[_i - 0] = arguments[_i];
+    }
+    rules = rules || [];
+    return {
+        stopOnFailure: false,
+        /** Runs parsing on all rules. */
+        runParse: function (inputValue, validatingObject, rootObject) {
+            return rules.reduce(function (currentValue, rule) { return rule.runParse(currentValue, validatingObject, rootObject); }, inputValue);
+        },
+        /** Runs all chained rules. */
+        runValidate: function (context, doneCallback, parsedValue, validatingObject, rootObject) {
+            if (!context) {
+                throw new Error("context is required.");
+            }
+            if (!doneCallback) {
+                throw new Error("done callback is required.");
+            }
+            var allRulesValid = true;
+            var rulesToRun = rules.slice();
+            var runRule = function () {
+                var rule = rulesToRun.shift();
+                if (rule) {
+                    rule.runValidate(context, function (success) {
+                        if (!success && rule.stopOnFailure) {
+                            doneCallback(false);
+                            return;
+                        }
+                        allRulesValid = allRulesValid && success;
+                        // Runs next rule recursively
+                        runRule();
+                    }, parsedValue, validatingObject, rootObject);
+                }
+                else {
+                    doneCallback(allRulesValid);
+                }
+            };
+            runRule();
+        }
+    };
+}
+exports.combineRules = combineRules;
 /**
  * Base class which can contain a set of rules which runs sequentially,
  * accumulates errors.
@@ -12,42 +76,28 @@ var __extends = (this && this.__extends) || function (d, b) {
 var SequentialRuleSet = (function () {
     function SequentialRuleSet() {
         this.rules = [];
-        this.stopOnFirstFailureValue = false;
+        this.stopOnFailure = false;
     }
+    SequentialRuleSet.prototype.stopOnFail = function (stopOnFailure) {
+        if (stopOnFailure === void 0) { stopOnFailure = true; }
+        var copy = this.clone();
+        copy.stopOnFailure = stopOnFailure;
+        copy.rules = this.rules;
+        return copy;
+    };
     /** Runs parsing on all rules. */
     SequentialRuleSet.prototype.runParse = function (inputValue, validatingObject, rootObject) {
-        return this.rules
-            .reduce(function (currentValue, rule) { return rule.runParse(currentValue, validatingObject, rootObject); }, inputValue);
+        return combineRules.apply(void 0, this.rules).runParse(inputValue, validatingObject, rootObject);
     };
     /** Runs all chained rules. */
     SequentialRuleSet.prototype.runValidate = function (context, doneCallback, parsedValue, validatingObject, rootObject) {
-        var _this = this;
         if (!context) {
             throw new Error("context is required.");
         }
         if (!doneCallback) {
             throw new Error("done callback is required.");
         }
-        var allRulesValid = true;
-        var rulesToRun = this.rules.slice();
-        var runRule = function () {
-            var rule = rulesToRun.shift();
-            if (rule) {
-                rule.runValidate(context, function (success) {
-                    if (!success && _this.stopOnFirstFailureValue) {
-                        doneCallback(false);
-                        return;
-                    }
-                    allRulesValid = allRulesValid && success;
-                    // Runs next rule recursively
-                    runRule();
-                }, parsedValue, validatingObject, rootObject);
-            }
-            else {
-                doneCallback(allRulesValid);
-            }
-        };
-        runRule();
+        combineRules.apply(void 0, this.rules).runValidate(context, doneCallback, parsedValue, validatingObject, rootObject);
     };
     SequentialRuleSet.prototype.withRule = function (rule, putRuleFirst) {
         if (putRuleFirst === void 0) { putRuleFirst = false; }
@@ -55,7 +105,7 @@ var SequentialRuleSet = (function () {
             throw new Error("rule is required");
         }
         var copy = this.clone();
-        copy.stopOnFirstFailureValue = this.stopOnFirstFailureValue;
+        copy.stopOnFailure = this.stopOnFailure;
         if (putRuleFirst) {
             copy.rules = [rule].concat(this.rules);
         }
@@ -68,13 +118,15 @@ var SequentialRuleSet = (function () {
      * Adds a rule which uses custom functions for validation and converting.
      * If parsing function is not provided value is passed to validation function without conversion.
      */
-    SequentialRuleSet.prototype.checkAndConvert = function (validationFn, parseFn, putRuleFirst) {
+    SequentialRuleSet.prototype.checkAndConvert = function (validationFn, parseFn, putRuleFirst, stopOnFailure) {
         if (putRuleFirst === void 0) { putRuleFirst = false; }
+        if (stopOnFailure === void 0) { stopOnFailure = false; }
         if (!validationFn) {
             throw new Error("Validation function is required.");
         }
         parseFn = (parseFn || (function (input) { return input; }));
         return this.withRule({
+            stopOnFailure: stopOnFailure || false,
             runParse: parseFn,
             runValidate: function (context, done, inputValue, validatingObject, rootObject) {
                 validationFn(function (errorMessage) {
@@ -90,37 +142,34 @@ var SequentialRuleSet = (function () {
         }, putRuleFirst);
     };
     /** Fails if input value is null or undefined. */
-    SequentialRuleSet.prototype.required = function (errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value is required."; }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+    SequentialRuleSet.prototype.required = function (options) {
+        options = ensureRuleOptions(options, { errorMessage: "Value is required.", stopOnFailure: true });
         return this.checkAndConvert(function (done, input) {
             if (input === null || input === undefined) {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
             }
-        }, null, true);
+        }, null, true, options.stopOnFailure);
     };
     /**
      * Parses input value.
      * Parse rules runs first.
      * If transformation function returns null or undefined or throws an error fails with specified error message.
      */
-    SequentialRuleSet.prototype.parse = function (convertFn, errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Conversion failed"; }
+    SequentialRuleSet.prototype.parse = function (convertFn, options) {
         if (!convertFn) {
             throw new Error("Transformation function is required.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+        options = ensureRuleOptions(options, {
+            errorMessage: "Conversion failed.",
+            stopOnFailure: true
+        });
         var failResult = new Object();
         return this.checkAndConvert(function (done, convertedValue, obj, root) {
             if (convertedValue == failResult) {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
@@ -136,24 +185,24 @@ var SequentialRuleSet = (function () {
             catch (e) {
                 return failResult;
             }
-        });
+        }, false, options.stopOnFailure);
     };
-    SequentialRuleSet.prototype.must = function (predicate, errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
+    SequentialRuleSet.prototype.must = function (predicate, options) {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value is not valid.",
+            stopOnFailure: false
+        });
         return this.checkAndConvert(function (done, input, obj, root) {
             if (!predicate(input, obj, root)) {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
             }
-        });
+        }, null, false, options.stopOnFailure);
     };
     return SequentialRuleSet;
 }());
@@ -173,54 +222,34 @@ var EnclosingValidationRuleBase = (function () {
         this.rule = rule;
         this.rulesBefore = [];
         this.rulesAfter = [];
+        this.stopOnFailure = false;
         if (!rule) {
             throw new Error("Validation rule is required.");
         }
     }
     EnclosingValidationRuleBase.prototype.runParse = function (inputValue, validatingObject, rootObject) {
-        return this.rule.runParse(inputValue, validatingObject, rootObject);
+        return combineRules(this.rule).runParse(inputValue, validatingObject, rootObject);
     };
     EnclosingValidationRuleBase.prototype.runValidate = function (context, doneCallback, obj, validatingObject, rootObject) {
         var all = (this.rulesBefore || []).concat([
             this.rule
         ], (this.rulesAfter || []));
-        this.runRuleSet(all, context, doneCallback, obj, validatingObject, rootObject);
+        combineRules.apply(void 0, all).runValidate(context, doneCallback, obj, validatingObject, rootObject);
     };
-    EnclosingValidationRuleBase.prototype.runRuleSet = function (rules, context, doneCallback, obj, validatingObject, rootObject) {
-        var rulesToRun = rules.slice();
-        var run = function () {
-            var rule = rulesToRun.shift();
-            if (rule) {
-                rule.runValidate(context, function (success) {
-                    if (!success) {
-                        doneCallback(false);
-                        return;
-                    }
-                    run();
-                }, obj, validatingObject, rootObject);
-            }
-            else {
-                doneCallback(true);
-            }
-        };
-        run();
-    };
-    EnclosingValidationRuleBase.prototype.copy = function () {
-        var result = this.clone();
-        result.rulesBefore = this.rulesBefore.slice();
-        result.rulesAfter = this.rulesAfter.slice();
-        return result;
+    EnclosingValidationRuleBase.prototype.stopOnFail = function (stopOnFailure) {
+        if (stopOnFailure === void 0) { stopOnFailure = true; }
+        var copy = this.clone();
+        copy.stopOnFailure = stopOnFailure;
+        return copy;
     };
     /** Disables null object. */
-    EnclosingValidationRuleBase.prototype.required = function (errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Object is required."; }
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
+    EnclosingValidationRuleBase.prototype.required = function (options) {
+        options = ensureRuleOptions(options, {
+            errorMessage: "Object is required.",
+            stopOnFailure: true
+        });
         var result = this.copy();
-        result.rulesBefore = [
-            any(function (v) { return v !== null && v !== undefined; }, errorMessage)
-        ].concat(result.rulesBefore);
+        result.rulesBefore = [any(function (v) { return v !== null && v !== undefined; }, options)].concat(result.rulesBefore);
         return result;
     };
     /** Adds a rule which is run before validation. */
@@ -241,31 +270,31 @@ var EnclosingValidationRuleBase = (function () {
         result.rulesAfter = this.rulesAfter.concat([rule]);
         return result;
     };
-    EnclosingValidationRuleBase.prototype.before = function (predicate, errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Object is not valid."; }
+    EnclosingValidationRuleBase.prototype.before = function (predicate, options) {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
-        return this.runBefore(any(predicate, errorMessage));
+        return this.runBefore(any(predicate, options));
     };
-    EnclosingValidationRuleBase.prototype.after = function (predicate, errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Object is not valid."; }
+    EnclosingValidationRuleBase.prototype.after = function (predicate, options) {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required.");
-        }
-        return this.runAfter(any(predicate, errorMessage));
+        return this.runAfter(any(predicate, options));
+    };
+    EnclosingValidationRuleBase.prototype.copy = function () {
+        var result = this.clone();
+        result.rulesBefore = this.rulesBefore.slice();
+        result.rulesAfter = this.rulesAfter.slice();
+        result.stopOnFailure = this.stopOnFailure;
+        return result;
     };
     return EnclosingValidationRuleBase;
 }());
 exports.EnclosingValidationRuleBase = EnclosingValidationRuleBase;
 var EmptyRule = (function () {
     function EmptyRule() {
+        this.stopOnFailure = false;
     }
     EmptyRule.prototype.runParse = function (inputValue, validatingObject, rootObject) {
         return inputValue;
@@ -289,13 +318,9 @@ var AnyRules = (function (_super) {
 }(SequentialRuleSet));
 exports.AnyRules = AnyRules;
 /** Validates any value using given predicate. */
-function any(predicate, errorMessage) {
-    if (errorMessage === void 0) { errorMessage = "Value is invalid"; }
-    if (!errorMessage) {
-        throw new Error("Error message is required");
-    }
+function any(predicate, options) {
     predicate = predicate || (function (v) { return true; });
-    return new AnyRules().must(predicate, errorMessage);
+    return new AnyRules().must(predicate, options);
 }
 exports.any = any;
 //# sourceMappingURL=rules-base.js.map
