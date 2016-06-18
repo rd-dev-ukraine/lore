@@ -2,7 +2,7 @@
 var ErrorAccumulator = (function () {
     function ErrorAccumulator() {
         this.errorHash = {};
-        this.isValid = false;
+        this.isValid = true;
     }
     ErrorAccumulator.prototype.report = function (path, errorMessage) {
         if (!errorMessage) {

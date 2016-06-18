@@ -1,10 +1,11 @@
 import { ValidationRule, ValidationResult } from "./definitions";
 import ErrorAccumulator from "./error-accumulator";
 import ValidationContext from "./validation-context";
-import { Promise } from "es6-promise";
+
+import * as rules from "./rules";
 
 export * from "./definitions";
-export * from "./rules";
+export { rules };
 
 export function validateWithCallback<T>(value: any, done: (result: ValidationResult<T>) => void, ...validators: ValidationRule<T>[]): void {
     if (!done) {
@@ -54,10 +55,10 @@ export function validateWithCallback<T>(value: any, done: (result: ValidationRes
                 };
                 done(validationResult);
             }
-        }
+        }        
+    };
 
-        runValidator();
-    }
+    runValidator();
 }
 
 export function validateWithPromise<T>(value: any, ...validators: ValidationRule<T>[]): Promise<T> {
@@ -68,7 +69,7 @@ export function validateWithPromise<T>(value: any, ...validators: ValidationRule
     return new Promise((resolve, reject) => {
         validateWithCallback(
             value,
-            result => {
+            result => {                
                 if (result.valid) {
                     resolve(result.convertedValue);
                 }

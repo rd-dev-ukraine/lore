@@ -4,137 +4,80 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var ObjectValidationRuleBase = (function () {
-    function ObjectValidationRuleBase(struct, passNullObject, nullObjectErrorMessage) {
-        this.struct = struct;
-        this.passNullObject = passNullObject;
-        this.nullObjectErrorMessage = nullObjectErrorMessage;
-        this.mustError = "";
-        if (!struct) {
-            throw new Error("object structure descriptor is required");
-        }
-        if (!passNullObject && !nullObjectErrorMessage) {
-            throw new Error("Validation message for null object required");
+var rules_base_1 = require("./rules-base");
+var ObjectValidationRuleCore = (function () {
+    function ObjectValidationRuleCore(properties, expandable) {
+        this.properties = properties;
+        this.expandable = expandable;
+        if (!properties) {
+            throw new Error("Properties is required.");
         }
     }
-    ObjectValidationRuleBase.prototype.run = function (value, validationContext, entity, root) {
-        if (value === null || value === undefined) {
-            if (!this.passNullObject) {
-                validationContext.reportError(this.nullObjectErrorMessage);
+    ObjectValidationRuleCore.prototype.runParse = function (inputValue, validatingObject, rootObject) {
+        if (inputValue === null || inputValue === undefined) {
+            return inputValue;
+        }
+        var result = {};
+        for (var property in this.properties) {
+            var validator = this.properties[property];
+            var sourceValue = inputValue[property];
+            result[property] = validator.runParse(sourceValue, inputValue, rootObject);
+        }
+        if (this.expandable) {
+            for (var property in inputValue) {
+                if (!this.properties[property]) {
+                    result[property] = inputValue[property];
+                }
             }
-            return value;
         }
-        if (this.mustPredicate && !this.mustPredicate(value, entity, root)) {
-            validationContext.reportError(this.mustError);
-        }
-        return this.runCore(value, validationContext, entity, root);
+        return result;
     };
-    ObjectValidationRuleBase.prototype.must = function (predicate, errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Object data is not valid."; }
-        if (!predicate) {
-            throw new Error("Predicate is requried");
+    ObjectValidationRuleCore.prototype.runValidate = function (context, doneCallback, obj, validatingObject, rootObject) {
+        var propertyRules = [];
+        for (var property in this.properties) {
+            var validator = this.properties[property];
+            propertyRules.push({
+                property: property,
+                validator: validator
+            });
         }
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
-        this.mustPredicate = predicate;
-        this.mustError = errorMessage;
-        return this;
+        var allValid = true;
+        var run = function () {
+            var rule = propertyRules.shift();
+            if (rule) {
+                var propertyContext = context.property(rule.property);
+                var propertyValue = obj[rule.property];
+                rule.validator.runValidate(propertyContext, function (success) {
+                    allValid = allValid && success;
+                    run();
+                }, propertyValue, obj, rootObject);
+            }
+            else {
+                doneCallback(allValid);
+            }
+        };
+        run();
     };
-    return ObjectValidationRuleBase;
+    return ObjectValidationRuleCore;
 }());
-exports.ObjectValidationRuleBase = ObjectValidationRuleBase;
 var ObjectValidationRule = (function (_super) {
     __extends(ObjectValidationRule, _super);
-    function ObjectValidationRule(struct, passNullObject, nullObjectErrorMessage) {
-        _super.call(this, struct, passNullObject, nullObjectErrorMessage);
+    function ObjectValidationRule(properties, isExpandable) {
+        _super.call(this, new ObjectValidationRuleCore(properties, isExpandable));
+        this.properties = properties;
+        this.isExpandable = isExpandable;
     }
-    ObjectValidationRule.prototype.runCore = function (value, validationContext, entity, root) {
-        var result = {};
-        for (var property in this.struct) {
-            if (this.struct.hasOwnProperty(property)) {
-                var rule = this.struct[property];
-                var inputValue = value[property];
-                var nestedContext = validationContext.property(property);
-                result[property] = rule.run(inputValue, nestedContext, value, root);
-            }
-        }
-        return result;
+    ObjectValidationRule.prototype.clone = function () {
+        return new ObjectValidationRule(this.properties, this.isExpandable);
+    };
+    ObjectValidationRule.prototype.expandable = function () {
+        return new ObjectValidationRule(this.properties, false);
     };
     return ObjectValidationRule;
-}(ObjectValidationRuleBase));
+}(rules_base_1.EnclosingValidationRuleBase));
 exports.ObjectValidationRule = ObjectValidationRule;
-var ExpandableObjectValidationRule = (function (_super) {
-    __extends(ExpandableObjectValidationRule, _super);
-    function ExpandableObjectValidationRule(struct, passNullObject, nullObjectErrorMessage) {
-        _super.call(this, struct, passNullObject, nullObjectErrorMessage);
-    }
-    ExpandableObjectValidationRule.prototype.runCore = function (value, validationContext, entity, root) {
-        var result = {};
-        for (var property in value) {
-            if (value.hasOwnProperty(property)) {
-                var rule = this.struct[property];
-                if (rule) {
-                    var inputValue = value[property];
-                    var nestedContext = validationContext.property(property);
-                    result[property] = rule.run(inputValue, nestedContext, value, root);
-                }
-                else {
-                    result[property] = value[property];
-                }
-            }
-        }
-        return result;
-    };
-    return ExpandableObjectValidationRule;
-}(ObjectValidationRuleBase));
-exports.ExpandableObjectValidationRule = ExpandableObjectValidationRule;
-/**
- * Creates a rule which validates given object according to structure.
- * Any extra properties would be omitted from the result.
- */
-function obj(struct, nullObjectErrorMessage) {
-    if (nullObjectErrorMessage === void 0) { nullObjectErrorMessage = "Object required"; }
-    if (!struct) {
-        throw new Error("Object structure descriptor is required");
-    }
-    return new ObjectValidationRule(struct, false, nullObjectErrorMessage);
+function obj(properties) {
+    return new ObjectValidationRule(properties, false);
 }
 exports.obj = obj;
-/**
- * Creates a rule which validates given object according to structure.
- * Any extra properties would be omitted from the result.
- * This validator doesn't fail on null value.
- */
-function objOptional(struct) {
-    if (!struct) {
-        throw new Error("Object structure descriptor is required");
-    }
-    return new ObjectValidationRule(struct, true);
-}
-exports.objOptional = objOptional;
-/**
- * Creates a rule which validates given object according to structure.
- * Any extra properties would be preserved as is in result.
- */
-function expandableObject(struct, nullObjectErrorMessage) {
-    if (nullObjectErrorMessage === void 0) { nullObjectErrorMessage = "Object required"; }
-    if (!struct) {
-        throw new Error("Object structure descriptor is required");
-    }
-    return new ExpandableObjectValidationRule(struct, false, nullObjectErrorMessage);
-}
-exports.expandableObject = expandableObject;
-/**
- * Creates a rule which validates given object according to structure.
- * Any extra properties would be preserved as is in result.
- * This validator doesn't fail on null value.
- */
-function optionalExpandableObject(struct) {
-    if (!struct) {
-        throw new Error("Object structure descriptor is required");
-    }
-    return new ExpandableObjectValidationRule(struct, true);
-}
-exports.optionalExpandableObject = optionalExpandableObject;
 //# sourceMappingURL=object-rules.js.map

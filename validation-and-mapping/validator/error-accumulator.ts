@@ -2,7 +2,7 @@ import { ValidationErrorHash } from "./definitions";
 
 export default class ErrorAccumulator {
     private errorHash: ValidationErrorHash = {};
-    private isValid = false;
+    private isValid = true;
 
     report(path: string, errorMessage: string): void {
         if (!errorMessage) {
@@ -10,8 +10,8 @@ export default class ErrorAccumulator {
         }
 
         const messages = this.errorHash[path] = (this.errorHash[path] || []);
-
         messages.push(errorMessage);
+        
         this.isValid = false;
     }
 

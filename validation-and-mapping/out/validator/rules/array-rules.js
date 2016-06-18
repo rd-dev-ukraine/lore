@@ -1,67 +1,56 @@
 "use strict";
-var ArrayValidationRule = (function () {
-    function ArrayValidationRule(elementValidator, passNullOrEmptyArray, nullOrEmptyArrayErrorMessage) {
-        this.elementValidator = elementValidator;
-        this.passNullOrEmptyArray = passNullOrEmptyArray;
-        this.nullOrEmptyArrayErrorMessage = nullOrEmptyArrayErrorMessage;
-        this.keepOnlyValidElements = false;
-        if (!this.passNullOrEmptyArray && !this.nullOrEmptyArrayErrorMessage) {
-            throw new Error("Null or empty array error message required is null array is not passed");
+var ArrayValidationRuleCore = (function () {
+    function ArrayValidationRuleCore(elementValidationRule, skipInvalidElements, filterElementFn) {
+        this.elementValidationRule = elementValidationRule;
+        this.skipInvalidElements = skipInvalidElements;
+        this.filterElementFn = filterElementFn;
+        if (!elementValidationRule) {
+            throw new Error("Element validator is required.");
         }
     }
-    ArrayValidationRule.prototype.run = function (value, validationContext, entity, root) {
+    ArrayValidationRuleCore.prototype.runParse = function (array, validatingObject, rootObject) {
         var _this = this;
-        if (value === null || value === undefined || value.length === 0) {
-            if (!this.passNullOrEmptyArray) {
-                validationContext.reportError(this.nullOrEmptyArrayErrorMessage);
-            }
-            return value;
+        if (array === null || array === undefined) {
+            return array;
         }
-        var result = [];
-        var _loop_1 = function(i) {
-            var elem = value[i];
-            if (this_1.filter && !this_1.filter(elem, value, root)) {
-                return "continue";
+        // We don't filter array elements here because we need to keep source indexes in validation context errors.
+        return array.map(function (e) { return _this.elementValidationRule.runParse(e, array, rootObject); });
+    };
+    ArrayValidationRuleCore.prototype.runValidate = function (context, doneCallback, array, validatingObject, rootObject) {
+        var _this = this;
+        var srcIndex = 0;
+        var index = 0;
+        var valid = true;
+        var run = function () {
+            if (index < array.length) {
+                var element = array[index];
+                if (_this.filterElementFn && !_this.filterElementFn(element, srcIndex)) {
+                    array.splice(index, 1);
+                    srcIndex++;
+                }
+                else {
+                    var elementContext = context.index(srcIndex);
+                    _this.elementValidationRule.runValidate(elementContext, function (success) {
+                        if (_this.skipInvalidElements) {
+                            if (!success) {
+                                array.splice(index, 1);
+                            }
+                        }
+                        else {
+                            valid = valid && success;
+                            index++;
+                        }
+                        srcIndex++;
+                    }, element, array, rootObject);
+                }
             }
-            var valid = true;
-            var nestedValidationContext = validationContext.index(i, function () {
-                valid = false;
-                return !_this.keepOnlyValidElements;
-            });
-            var convertedValue = this_1.elementValidator.run(elem, nestedValidationContext, value, root);
-            if (valid || !this_1.keepOnlyValidElements) {
-                result.push(convertedValue);
+            else {
+                doneCallback(valid);
             }
         };
-        var this_1 = this;
-        for (var i = 0; i < value.length; i++) {
-            var state_1 = _loop_1(i);
-            if (state_1 === "continue") continue;
-        }
-        return result;
+        run();
     };
-    ArrayValidationRule.prototype.keepOnlyValid = function (onlyValid) {
-        if (onlyValid === void 0) { onlyValid = true; }
-        this.keepOnlyValidElements = onlyValid;
-        return this;
-    };
-    ArrayValidationRule.prototype.filterElements = function (predicate) {
-        if (!predicate) {
-            throw new Error("predicate is required");
-        }
-        this.filter = predicate;
-        return this;
-    };
-    return ArrayValidationRule;
+    return ArrayValidationRuleCore;
 }());
-exports.ArrayValidationRule = ArrayValidationRule;
-function arr(elementValidationRule, nullValueErrorMessage) {
-    if (nullValueErrorMessage === void 0) { nullValueErrorMessage = "Value is required."; }
-    return new ArrayValidationRule(elementValidationRule, true, nullValueErrorMessage);
-}
-exports.arr = arr;
-function arrOptional(elementValidator) {
-    return new ArrayValidationRule(elementValidator, false);
-}
-exports.arrOptional = arrOptional;
+exports.ArrayValidationRuleCore = ArrayValidationRuleCore;
 //# sourceMappingURL=array-rules.js.map

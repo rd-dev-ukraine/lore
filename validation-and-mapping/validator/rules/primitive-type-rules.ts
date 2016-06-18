@@ -21,7 +21,7 @@ export class StringRules extends SequentialRuleSet<string> {
                     done(errorMessage);
                 }
                 else {
-                    done
+                    done();
                 }
             }
         );
