@@ -6,10 +6,10 @@ import { validateWithPromise as validate, rules } from "../validator";
 export default () => {
     describe("for object with flat structure", () => {
         const objectStructure = rules.obj({
-            id: rules.str().required().notEmpty("Empty!!"),
-            title: rules.str().notEmpty().must(v => v.length > 3, "Too short"),
+            id: rules.str().required().notEmpty({ errorMessage: "Empty!!" }),
+            title: rules.str().notEmpty().must(v => v.length > 3, { errorMessage: "Too short" }),
             description: rules.str(),
-            price: rules.num().required().must(p => p > 0, "Positive!!!")
+            price: rules.num().required().must(p => p > 0, { errorMessage: "Positive!!!" })
         });
 
         it("should pass validation for correct structure", done => {
@@ -75,11 +75,13 @@ export default () => {
                 retailPrice: rules.num().required()
             }).after(v => v["price"] < v["retailPrice"], "Price is not profitable");
 
-            const result = validate<any>({
-                id: 10,
-                price: 100,
-                retailPrice: 50
-            }, struct)
+            const result = validate<any>(
+                {
+                    id: 10,
+                    price: 100,
+                    retailPrice: 50
+                },
+                struct)
                 .then(() => done("Must fail"))
                 .catch(err => assertBlock(done, () => {
                     should(err[""]).deepEqual(["Price is not profitable"]);
@@ -90,7 +92,7 @@ export default () => {
     describe("for any object", () => {
         it("should support .before() validation rule", done => {
             const struct = rules.obj({
-                id: rules.num().required().must(v => v > 100, "ID must be greater than 100"),
+                id: rules.num().required().must(v => v > 100, { errorMessage: "ID must be greater than 100" }),
                 price: rules.num().required(),
                 retailPrice: rules.num().required()
             }).before(v => v["price"] < v["retailPrice"], "Price is not profitable");
@@ -140,7 +142,7 @@ export default () => {
 
     describe("for required nested objects", () => {
         const objectStructure = rules.obj({
-            id: rules.num().required().must(v => v > 0, "ID must be greater than zero"),
+            id: rules.num().required().must(v => v > 0, { errorMessage: "ID must be greater than zero" }),
             title: rules.str().required().must(s => s.length < 10),
             delivery: rules.obj({
                 price: rules.num().required().must(v => v > 0),
@@ -171,8 +173,8 @@ export default () => {
             title: rules.str().required().must(s => s.length < 10),
             delivery: rules.obj({
                 price: rules.num()
-                    .required("Price is required")
-                    .must(v => v > 0, "Price must be greater than zero"),
+                    .required({ errorMessage: "Price is required" })
+                    .must(v => v > 0, { errorMessage: "Price must be greater than zero" }),
                 address: rules.str().required().notEmpty()
             })
         });
@@ -285,7 +287,7 @@ export default () => {
                 .required()
                 .must(v => {
                     return isNaN(v) || v < 100
-                }, "Id too large")
+                }, { errorMessage: "Id too large" })
         }).expandable();
 
         it("valid object must pass validator chain", done => {

@@ -14,7 +14,7 @@ export default () => {
         });
 
         it("should error if value is not string and conversion disabled", done => {
-            validate(213, rules.str(false, "Value is not string"))
+            validate(213, rules.str(false, { errorMessage: "Value is not string" }))
                 .then(v => {
                     done("Validation must fail");
                 })
@@ -34,7 +34,7 @@ export default () => {
         });
 
         it("should run chained validators", done => {
-            validate("", rules.str().notEmpty("Empty string is invalid!"))
+            validate("", rules.str().notEmpty({ errorMessage: "Empty string is invalid!" }))
                 .then(() => {
                     done("Validation must faild.");
                 })
@@ -54,7 +54,7 @@ export default () => {
         });
 
         it("should fail if null string and required rule included", done => {
-            validate(null, rules.str(false).required("NULL!!"))
+            validate(null, rules.str(false).required({ errorMessage: "NULL!!" }))
                 .then(() => done("Validation must fail."))
                 .catch(err => assertBlock(done, () => {
                     should(err[""]).deepEqual(["NULL!!"]);
@@ -62,7 +62,7 @@ export default () => {
         });
 
         it("should pass if null string and required rule included and conversion enabled", done => {
-            validate(null, rules.str().required("NULL!!"))
+            validate(null, rules.str().required({ errorMessage: "NULL!!" }))
                 .then(v => assertBlock(done, () => {
                     v.should.equal("");
                 }))
@@ -70,7 +70,10 @@ export default () => {
         });
 
         it("should fail if notEmpty rule added for empty string", done => {
-            validate("", rules.str().required("Required fail").notEmpty("Not empty fail"))
+            validate("",
+                rules.str()
+                    .required({ errorMessage: "Required fail" })
+                    .notEmpty({ errorMessage: "Not empty fail" }))
                 .then(v => done("Validation must fail"))
                 .catch(err => assertBlock(done, () => {
                     err[""].should.deepEqual(["Not empty fail"]);
@@ -78,7 +81,10 @@ export default () => {
         });
 
         it("should fail is must condition is failed", done => {
-            validate("123", rules.str().required().must(v => v.length > 10, "Too short!"))
+            validate("123",
+                rules.str()
+                    .required()
+                    .must(v => v.length > 10, { errorMessage: "Too short!" }))
                 .then(() => done("Must fail!"))
                 .catch(err => assertBlock(done, () => {
                     should(err[""]).deepEqual(["Too short!"]);
@@ -86,7 +92,11 @@ export default () => {
         });
 
         it("should pass is must condition is met", done => {
-            validate("1234567890", rules.str().required().must(v => v.length > 3, "Too short!"))
+            validate(
+                "1234567890",
+                rules.str()
+                    .required()
+                    .must(v => v.length > 3, { errorMessage: "Too short!" }))
                 .then(v => assertBlock(done, () => {
                     v.should.equal("1234567890");
                 }))
@@ -115,7 +125,7 @@ export default () => {
 
         it("should fail number if value is not convertible", done => {
             const convertibleValue = "sdffsdf";
-            validate(convertibleValue, rules.num(true, "NOT CONVERTIBLE"))
+            validate(convertibleValue, rules.num(true, { errorMessage: "NOT CONVERTIBLE" }))
                 .then(v => done(v))
                 .catch(err => assertBlock(done, () => {
                     should(err[""]).deepEqual(["NOT CONVERTIBLE"]);
@@ -124,7 +134,7 @@ export default () => {
 
         it("should fail if value is convertible but conversion disabled", done => {
             const convertibleValue = "2344.4";
-            validate(convertibleValue, rules.num(false, "NOT NUMBER!"))
+            validate(convertibleValue, rules.num(false, { errorMessage: "NOT NUMBER!" }))
                 .then(v => done("Must not convert if conversion disabled!"))
                 .catch(err => assertBlock(done, () => {
                     should(err[""]).deepEqual(["NOT NUMBER!"]);
@@ -148,7 +158,7 @@ export default () => {
         });
 
         it("should fail if null value and required rule included", done => {
-            validate(null, rules.num(false).required("REQUIRED"))
+            validate(null, rules.num(false).required({ errorMessage: "REQUIRED" }))
                 .then(() => done("Validation must fail"))
                 .catch(err => assertBlock(done, () => {
                     should(err[""]).deepEqual(["REQUIRED"]);
@@ -156,7 +166,7 @@ export default () => {
         });
 
         it("should fail if conversion disabled and value is not a number", done => {
-            validate("1223", rules.num(false, "NOT A NUMBER"))
+            validate("1223", rules.num(false, { errorMessage: "NOT A NUMBER" }))
                 .then(() => done("Validation must fail"))
                 .catch(err => assertBlock(done, () => {
                     should(err[""]).deepEqual(["NOT A NUMBER"]);
@@ -165,7 +175,7 @@ export default () => {
     });
 
     describe("for any value", () => {
-        const validator = rules.any<Date>(v => new Date(`${v}`) !== undefined, "Invalid date")
+        const validator = rules.any<Date>(v => new Date(`${v}`) !== undefined, { errorMessage: "Invalid date" })
             .parse(v => new Date(`${v}`));
 
         it("must validate correct date", done => {

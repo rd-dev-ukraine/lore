@@ -78,13 +78,6 @@ var SequentialRuleSet = (function () {
         this.rules = [];
         this.stopOnFailure = false;
     }
-    SequentialRuleSet.prototype.stopOnFail = function (stopOnFailure) {
-        if (stopOnFailure === void 0) { stopOnFailure = true; }
-        var copy = this.clone();
-        copy.stopOnFailure = stopOnFailure;
-        copy.rules = this.rules;
-        return copy;
-    };
     /** Runs parsing on all rules. */
     SequentialRuleSet.prototype.runParse = function (inputValue, validatingObject, rootObject) {
         return combineRules.apply(void 0, this.rules).runParse(inputValue, validatingObject, rootObject);

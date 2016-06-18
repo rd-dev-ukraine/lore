@@ -89,16 +89,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
     stopOnFailure = false;
 
     protected abstract clone(): SequentialRuleSet<T>;
-
-    stopOnFail(stopOnFailure: boolean = true): this {
-        const copy = this.clone();
-
-        copy.stopOnFailure = stopOnFailure;
-        copy.rules = this.rules;
-
-        return <this>copy;
-    }
-
+    
     /** Runs parsing on all rules. */
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
         return combineRules(...this.rules).runParse(inputValue, validatingObject, rootObject);
@@ -406,7 +397,7 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
 }
 
 export class EmptyRule<T> implements ValidationRule<T> {
-    
+
     stopOnFailure = false;
 
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {

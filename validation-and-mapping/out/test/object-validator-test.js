@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = function () {
     describe("for object with flat structure", function () {
         var objectStructure = validator_1.rules.obj({
-            id: validator_1.rules.str().required().notEmpty("Empty!!"),
-            title: validator_1.rules.str().notEmpty().must(function (v) { return v.length > 3; }, "Too short"),
+            id: validator_1.rules.str().required().notEmpty({ errorMessage: "Empty!!" }),
+            title: validator_1.rules.str().notEmpty().must(function (v) { return v.length > 3; }, { errorMessage: "Too short" }),
             description: validator_1.rules.str(),
-            price: validator_1.rules.num().required().must(function (p) { return p > 0; }, "Positive!!!")
+            price: validator_1.rules.num().required().must(function (p) { return p > 0; }, { errorMessage: "Positive!!!" })
         });
         it("should pass validation for correct structure", function (done) {
             var test = {
@@ -81,7 +81,7 @@ exports.default = function () {
     describe("for any object", function () {
         it("should support .before() validation rule", function (done) {
             var struct = validator_1.rules.obj({
-                id: validator_1.rules.num().required().must(function (v) { return v > 100; }, "ID must be greater than 100"),
+                id: validator_1.rules.num().required().must(function (v) { return v > 100; }, { errorMessage: "ID must be greater than 100" }),
                 price: validator_1.rules.num().required(),
                 retailPrice: validator_1.rules.num().required()
             }).before(function (v) { return v["price"] < v["retailPrice"]; }, "Price is not profitable");
@@ -126,7 +126,7 @@ exports.default = function () {
     });
     describe("for required nested objects", function () {
         var objectStructure = validator_1.rules.obj({
-            id: validator_1.rules.num().required().must(function (v) { return v > 0; }, "ID must be greater than zero"),
+            id: validator_1.rules.num().required().must(function (v) { return v > 0; }, { errorMessage: "ID must be greater than zero" }),
             title: validator_1.rules.str().required().must(function (s) { return s.length < 10; }),
             delivery: validator_1.rules.obj({
                 price: validator_1.rules.num().required().must(function (v) { return v > 0; }),
@@ -154,8 +154,8 @@ exports.default = function () {
             title: validator_1.rules.str().required().must(function (s) { return s.length < 10; }),
             delivery: validator_1.rules.obj({
                 price: validator_1.rules.num()
-                    .required("Price is required")
-                    .must(function (v) { return v > 0; }, "Price must be greater than zero"),
+                    .required({ errorMessage: "Price is required" })
+                    .must(function (v) { return v > 0; }, { errorMessage: "Price must be greater than zero" }),
                 address: validator_1.rules.str().required().notEmpty()
             })
         });
@@ -256,7 +256,7 @@ exports.default = function () {
                 .required()
                 .must(function (v) {
                 return isNaN(v) || v < 100;
-            }, "Id too large")
+            }, { errorMessage: "Id too large" })
         }).expandable();
         it("valid object must pass validator chain", function (done) {
             var validObject = {

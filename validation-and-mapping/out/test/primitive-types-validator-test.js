@@ -13,7 +13,7 @@ exports.default = function () {
                 .catch(function (err) { return done(err); });
         });
         it("should error if value is not string and conversion disabled", function (done) {
-            validator_1.validateWithPromise(213, validator_1.rules.str(false, "Value is not string"))
+            validator_1.validateWithPromise(213, validator_1.rules.str(false, { errorMessage: "Value is not string" }))
                 .then(function (v) {
                 done("Validation must fail");
             })
@@ -31,7 +31,7 @@ exports.default = function () {
             });
         });
         it("should run chained validators", function (done) {
-            validator_1.validateWithPromise("", validator_1.rules.str().notEmpty("Empty string is invalid!"))
+            validator_1.validateWithPromise("", validator_1.rules.str().notEmpty({ errorMessage: "Empty string is invalid!" }))
                 .then(function () {
                 done("Validation must faild.");
             })
@@ -49,35 +49,41 @@ exports.default = function () {
             });
         });
         it("should fail if null string and required rule included", function (done) {
-            validator_1.validateWithPromise(null, validator_1.rules.str(false).required("NULL!!"))
+            validator_1.validateWithPromise(null, validator_1.rules.str(false).required({ errorMessage: "NULL!!" }))
                 .then(function () { return done("Validation must fail."); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 should(err[""]).deepEqual(["NULL!!"]);
             }); });
         });
         it("should pass if null string and required rule included and conversion enabled", function (done) {
-            validator_1.validateWithPromise(null, validator_1.rules.str().required("NULL!!"))
+            validator_1.validateWithPromise(null, validator_1.rules.str().required({ errorMessage: "NULL!!" }))
                 .then(function (v) { return utils_1.assertBlock(done, function () {
                 v.should.equal("");
             }); })
                 .catch(function () { return done("Validation must pass!"); });
         });
         it("should fail if notEmpty rule added for empty string", function (done) {
-            validator_1.validateWithPromise("", validator_1.rules.str().required("Required fail").notEmpty("Not empty fail"))
+            validator_1.validateWithPromise("", validator_1.rules.str()
+                .required({ errorMessage: "Required fail" })
+                .notEmpty({ errorMessage: "Not empty fail" }))
                 .then(function (v) { return done("Validation must fail"); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 err[""].should.deepEqual(["Not empty fail"]);
             }); });
         });
         it("should fail is must condition is failed", function (done) {
-            validator_1.validateWithPromise("123", validator_1.rules.str().required().must(function (v) { return v.length > 10; }, "Too short!"))
+            validator_1.validateWithPromise("123", validator_1.rules.str()
+                .required()
+                .must(function (v) { return v.length > 10; }, { errorMessage: "Too short!" }))
                 .then(function () { return done("Must fail!"); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 should(err[""]).deepEqual(["Too short!"]);
             }); });
         });
         it("should pass is must condition is met", function (done) {
-            validator_1.validateWithPromise("1234567890", validator_1.rules.str().required().must(function (v) { return v.length > 3; }, "Too short!"))
+            validator_1.validateWithPromise("1234567890", validator_1.rules.str()
+                .required()
+                .must(function (v) { return v.length > 3; }, { errorMessage: "Too short!" }))
                 .then(function (v) { return utils_1.assertBlock(done, function () {
                 v.should.equal("1234567890");
             }); })
@@ -103,7 +109,7 @@ exports.default = function () {
         });
         it("should fail number if value is not convertible", function (done) {
             var convertibleValue = "sdffsdf";
-            validator_1.validateWithPromise(convertibleValue, validator_1.rules.num(true, "NOT CONVERTIBLE"))
+            validator_1.validateWithPromise(convertibleValue, validator_1.rules.num(true, { errorMessage: "NOT CONVERTIBLE" }))
                 .then(function (v) { return done(v); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 should(err[""]).deepEqual(["NOT CONVERTIBLE"]);
@@ -111,7 +117,7 @@ exports.default = function () {
         });
         it("should fail if value is convertible but conversion disabled", function (done) {
             var convertibleValue = "2344.4";
-            validator_1.validateWithPromise(convertibleValue, validator_1.rules.num(false, "NOT NUMBER!"))
+            validator_1.validateWithPromise(convertibleValue, validator_1.rules.num(false, { errorMessage: "NOT NUMBER!" }))
                 .then(function (v) { return done("Must not convert if conversion disabled!"); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 should(err[""]).deepEqual(["NOT NUMBER!"]);
@@ -132,14 +138,14 @@ exports.default = function () {
                 .catch(function () { return done("Validation must pass!"); });
         });
         it("should fail if null value and required rule included", function (done) {
-            validator_1.validateWithPromise(null, validator_1.rules.num(false).required("REQUIRED"))
+            validator_1.validateWithPromise(null, validator_1.rules.num(false).required({ errorMessage: "REQUIRED" }))
                 .then(function () { return done("Validation must fail"); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 should(err[""]).deepEqual(["REQUIRED"]);
             }); });
         });
         it("should fail if conversion disabled and value is not a number", function (done) {
-            validator_1.validateWithPromise("1223", validator_1.rules.num(false, "NOT A NUMBER"))
+            validator_1.validateWithPromise("1223", validator_1.rules.num(false, { errorMessage: "NOT A NUMBER" }))
                 .then(function () { return done("Validation must fail"); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 should(err[""]).deepEqual(["NOT A NUMBER"]);
@@ -147,7 +153,7 @@ exports.default = function () {
         });
     });
     describe("for any value", function () {
-        var validator = validator_1.rules.any(function (v) { return new Date("" + v) !== undefined; }, "Invalid date")
+        var validator = validator_1.rules.any(function (v) { return new Date("" + v) !== undefined; }, { errorMessage: "Invalid date" })
             .parse(function (v) { return new Date("" + v); });
         it("must validate correct date", function (done) {
             validator_1.validateWithPromise("2014-11-01", validator)
