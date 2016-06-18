@@ -5,7 +5,7 @@ import ValidationContext from "./validation-context";
 export * from "./definitions";
 export * from "./rules";
 
-export function validate<T>(value: any, done: (result: ValidationResult<T>) => void, ...validators: ValidationRule<T>[]): void {
+export function validateWithCallback<T>(value: any, done: (result: ValidationResult<T>) => void, ...validators: ValidationRule<T>[]): void {
     if (!done) {
         throw new Error("Done callback is required.");
     }
@@ -17,15 +17,17 @@ export function validate<T>(value: any, done: (result: ValidationResult<T>) => v
     const validationContext = new ValidationContext("", errorAccumulator);
 
     let val = value;
+    let valid = true;
     const runValidator = () => {
         const validator = validators.shift();
 
         if (validator) {
-            validator.run(validationContext,
-                (convertedValue, success) => {
-                    if (success) {
-                        val = convertedValue;
-                    }
+            val = validator.runParse(val, val, val);
+
+            validator.runValidate(
+                validationContext,
+                success => {
+                    valid = valid && success;
 
                     // Run next validator recursively.
                     runValidator();
@@ -52,7 +54,7 @@ export function validate<T>(value: any, done: (result: ValidationResult<T>) => v
                 done(validationResult);
             }
         }
-        
+
         runValidator();
     }
 }
