@@ -95,32 +95,34 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
         parseFn = (parseFn || (input => input));
 
-        return this.withRule({
+        return this.withRule(
+            {
 
-            runParse: parseFn,
+                runParse: parseFn,
 
-            runValidate(
-                context: IValidationContext,
-                done: (success: boolean) => void,
-                inputValue: any,
-                validatingObject?: any,
-                rootObject?: any): void {
+                runValidate(
+                    context: IValidationContext,
+                    done: (success: boolean) => void,
+                    inputValue: any,
+                    validatingObject?: any,
+                    rootObject?: any): void {
 
-                validationFn(
-                    (errorMessage) => {
-                        if (errorMessage) {
-                            context.reportError(errorMessage);
-                            done(false);
-                        }
-                        else {
-                            done(true);
-                        }
-                    },
-                    inputValue,
-                    validatingObject,
-                    rootObject);
-            }
-        }, putRuleFirst);
+                    validationFn(
+                        (errorMessage) => {
+                            if (errorMessage) {
+                                context.reportError(errorMessage);
+                                done(false);
+                            }
+                            else {
+                                done(true);
+                            }
+                        },
+                        inputValue,
+                        validatingObject,
+                        rootObject);
+                }
+            },
+            putRuleFirst);
     }
 
     /** Fails if input value is null or undefined. */
@@ -129,14 +131,17 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
             throw new Error("Error message is required.");
         }
 
-        return this.checkAndConvert((done, input) => {
-            if (input === null || input === undefined) {
-                done(errorMessage);
-            }
-            else {
-                done();
-            }
-        });
+        return this.checkAndConvert(
+            (done, input) => {
+                if (input === null || input === undefined) {
+                    done(errorMessage);
+                }
+                else {
+                    done();
+                }
+            },
+            null,
+            true);
     }
 
     /** 
