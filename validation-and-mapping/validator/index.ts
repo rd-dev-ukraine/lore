@@ -1,6 +1,7 @@
 import { ValidationRule, ValidationResult } from "./definitions";
 import ErrorAccumulator from "./error-accumulator";
 import ValidationContext from "./validation-context";
+import { Promise } from "es6-promise";
 
 export * from "./definitions";
 export * from "./rules";
@@ -57,4 +58,24 @@ export function validateWithCallback<T>(value: any, done: (result: ValidationRes
 
         runValidator();
     }
+}
+
+export function validateWithPromise<T>(value: any, ...validators: ValidationRule<T>[]): Promise<T> {
+    if (!validators || !validators.length) {
+        throw new Error("At least one validator is required");
+    }
+
+    return new Promise((resolve, reject) => {
+        validateWithCallback(
+            value,
+            result => {
+                if (result.valid) {
+                    resolve(result.convertedValue);
+                }
+                else {
+                    reject(result.errors);
+                }
+            },
+            ...validators);
+    });
 }
