@@ -13,7 +13,8 @@ class ObjectValidationRuleCore<T extends IObject> implements ValidationRule<T> {
 
     constructor(
         private properties: IPropertyValidationHash,
-        private expandable: boolean) {
+        private expandable: boolean,
+        public stopOnFailure: boolean) {
 
         if (!properties) {
             throw new Error("Properties is required.");
@@ -97,20 +98,22 @@ class ObjectValidationRuleCore<T extends IObject> implements ValidationRule<T> {
 
 export class ObjectValidationRule<T extends IObject> extends EnclosingValidationRuleBase<T> {
 
-    constructor(private properties: IPropertyValidationHash,
-        private isExpandable: boolean) {
-        super(new ObjectValidationRuleCore<T>(properties, isExpandable));
+    constructor(
+        private properties: IPropertyValidationHash,
+        private isExpandable: boolean,
+        private stopsOnMainRuleFailure: boolean) {
+        super(new ObjectValidationRuleCore<T>(properties, isExpandable, stopsOnMainRuleFailure));
     }
 
     protected clone(): this {
-        return <this>new ObjectValidationRule<T>(this.properties, this.isExpandable);
+        return <this>new ObjectValidationRule<T>(this.properties, this.isExpandable, this.stopsOnMainRuleFailure);
     }
 
     expandable(): this {
-        return <this>new ObjectValidationRule<T>(this.properties, true);
+        return <this>new ObjectValidationRule<T>(this.properties, true, this.stopsOnMainRuleFailure);
     }
 }
 
-export function obj<T>(properties: IPropertyValidationHash): ObjectValidationRule<T> {
-    return new ObjectValidationRule<T>(properties, false);
+export function obj<T>(properties: IPropertyValidationHash, stopOnFailure = true): ObjectValidationRule<T> {
+    return new ObjectValidationRule<T>(properties, false, stopOnFailure);
 }

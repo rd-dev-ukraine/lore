@@ -6,10 +6,11 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var rules_base_1 = require("./rules-base");
 var HashValidationRuleCore = (function () {
-    function HashValidationRuleCore(elementValidationRule, skipInvalidElements, filterHashFn) {
+    function HashValidationRuleCore(elementValidationRule, skipInvalidElements, filterHashFn, stopOnFailure) {
         this.elementValidationRule = elementValidationRule;
         this.skipInvalidElements = skipInvalidElements;
         this.filterHashFn = filterHashFn;
+        this.stopOnFailure = stopOnFailure;
         if (!elementValidationRule) {
             throw new Error("Element validation rule required");
         }
@@ -62,28 +63,29 @@ var HashValidationRuleCore = (function () {
 }());
 var HashValidationRule = (function (_super) {
     __extends(HashValidationRule, _super);
-    function HashValidationRule(elementValidationRule, skipInvalidElementsProp, filterHashFn) {
-        _super.call(this, new HashValidationRuleCore(elementValidationRule, skipInvalidElementsProp, filterHashFn));
+    function HashValidationRule(elementValidationRule, skipInvalidElementsProp, filterHashFn, stopOnMainRuleFailure) {
+        _super.call(this, new HashValidationRuleCore(elementValidationRule, skipInvalidElementsProp, filterHashFn, stopOnMainRuleFailure));
         this.elementValidationRule = elementValidationRule;
         this.skipInvalidElementsProp = skipInvalidElementsProp;
         this.filterHashFn = filterHashFn;
+        this.stopOnMainRuleFailure = stopOnMainRuleFailure;
     }
     HashValidationRule.prototype.clone = function () {
-        return new HashValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, this.filterHashFn);
+        return new HashValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, this.filterHashFn, this.stopOnMainRuleFailure);
     };
     /**
      * Don't fail on invalid element. Instead don't include invalid elements in result hash.
      * Note new rule never fails instead return empty hash.
      */
     HashValidationRule.prototype.skipInvalidElements = function () {
-        return new HashValidationRule(this.elementValidationRule, true, this.filterHashFn);
+        return new HashValidationRule(this.elementValidationRule, true, this.filterHashFn, this.stopOnMainRuleFailure);
     };
     /** Filter result hash by applying predicate to each hash item and include only items passed the test. */
     HashValidationRule.prototype.filter = function (predicate) {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        return new HashValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, predicate);
+        return new HashValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, predicate, this.stopOnMainRuleFailure);
     };
     return HashValidationRule;
 }(rules_base_1.EnclosingValidationRuleBase));
@@ -91,11 +93,12 @@ exports.HashValidationRule = HashValidationRule;
 /**
  * Validates a map of objects with the same structure.
  */
-function hash(elementValidationRule) {
+function hash(elementValidationRule, stopOnFailure) {
+    if (stopOnFailure === void 0) { stopOnFailure = true; }
     if (!elementValidationRule) {
         throw new Error("Element validation rule is required.");
     }
-    return new HashValidationRule(elementValidationRule, false, null);
+    return new HashValidationRule(elementValidationRule, false, null, stopOnFailure);
 }
 exports.hash = hash;
 //# sourceMappingURL=hash-rules.js.map

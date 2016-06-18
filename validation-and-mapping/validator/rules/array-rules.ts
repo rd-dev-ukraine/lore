@@ -1,4 +1,5 @@
 import { ValidationRule, IValidationContext } from "../definitions";
+import { EnclosingValidationRuleBase } from "./rules-base";
 
 
 export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElement[]> {
@@ -6,7 +7,8 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
     constructor(
         private elementValidationRule: ValidationRule<TElement>,
         private skipInvalidElements: boolean,
-        private filterElementFn: (element: TElement, index?: number) => boolean) {
+        private filterElementFn: (element: TElement, index?: number) => boolean,
+        public stopOnFailure: boolean) {
 
         if (!elementValidationRule) {
             throw new Error("Element validator is required.");
@@ -20,7 +22,6 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
         // We don't filter array elements here because we need to keep source indexes in validation context errors.
         return array.map(e => this.elementValidationRule.runParse(e, array, rootObject));
     }
-
 
     runValidate(
         context: IValidationContext,
@@ -74,3 +75,64 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
     }
 }
 
+export class ArrayValidationRule<TElement> extends EnclosingValidationRuleBase<TElement[]> {
+
+    constructor(
+        private elementValidationRule: ValidationRule<TElement>,
+        private skipInvalidElementsProp: boolean,
+        private filterElementFn: (element: TElement, index?: number) => boolean,
+        private stopOnMainRuleFailure) {
+
+        super(new ArrayValidationRuleCore<TElement>(
+            elementValidationRule,
+            skipInvalidElementsProp,
+            filterElementFn,
+            stopOnMainRuleFailure));
+    }
+
+    protected clone(): this {
+        return <this>new ArrayValidationRule<TElement>(
+            this.elementValidationRule,
+            this.skipInvalidElementsProp,
+            this.filterElementFn,
+            this.stopOnMainRuleFailure);
+    }
+
+    /**
+     * Don't fail on invalid element. Instead don't include invalid elements in result array.
+     * Note new rule never fails instead it returns empty array.
+     */
+    skipInvalidElements(): this {
+        return <this>new ArrayValidationRule<TElement>(
+            this.elementValidationRule,
+            true,
+            this.filterElementFn,
+            this.stopOnMainRuleFailure);
+    }
+
+    /** Filter result array by applying predicate to each hash item and include only items passed the test. */
+    filter(predicate: (element: TElement, index?: number) => boolean): this {
+        if (!predicate) {
+            throw new Error("Predicate is required.");
+        }
+
+        return <this>new ArrayValidationRule<TElement>(
+            this.elementValidationRule,
+            this.skipInvalidElementsProp,
+            predicate,
+            this.stopOnMainRuleFailure);
+    }
+}
+
+/** Validates an array of the elements with the same structure. */
+export function arr<TElement>(elementValidationRule: ValidationRule<TElement>, stopOnFailure = true): ArrayValidationRule<TElement> {
+    if (!elementValidationRule) {
+        throw new Error("Element validation rule is required.");
+    }
+
+    return new ArrayValidationRule<TElement>(
+        elementValidationRule,
+        false,
+        null,
+        stopOnFailure);
+}

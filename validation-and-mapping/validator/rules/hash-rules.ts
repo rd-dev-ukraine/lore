@@ -10,7 +10,8 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
     constructor(
         private elementValidationRule: ValidationRule<TElement>,
         private skipInvalidElements: boolean,
-        private filterHashFn: (key: string, value?: TElement, rawValue?: any) => boolean) {
+        private filterHashFn: (key: string, value?: TElement, rawValue?: any) => boolean,
+        public stopOnFailure) {
 
         if (!elementValidationRule) {
             throw new Error("Element validation rule required");
@@ -86,16 +87,18 @@ export class HashValidationRule<TElement> extends EnclosingValidationRuleBase<IH
     constructor(
         private elementValidationRule: ValidationRule<TElement>,
         private skipInvalidElementsProp: boolean,
-        private filterHashFn: (key: string, value?: TElement) => boolean) {
+        private filterHashFn: (key: string, value?: TElement) => boolean,
+        private stopOnMainRuleFailure) {
 
-        super(new HashValidationRuleCore<TElement>(elementValidationRule, skipInvalidElementsProp, filterHashFn));
+        super(new HashValidationRuleCore<TElement>(elementValidationRule, skipInvalidElementsProp, filterHashFn, stopOnMainRuleFailure));
     }
 
     protected clone(): this {
         return <this>new HashValidationRule<TElement>(
             this.elementValidationRule,
             this.skipInvalidElementsProp,
-            this.filterHashFn);
+            this.filterHashFn,
+            this.stopOnMainRuleFailure);
     }
 
     /**
@@ -106,7 +109,8 @@ export class HashValidationRule<TElement> extends EnclosingValidationRuleBase<IH
         return <this>new HashValidationRule<TElement>(
             this.elementValidationRule,
             true,
-            this.filterHashFn);
+            this.filterHashFn,
+            this.stopOnMainRuleFailure);
     }
 
     /** Filter result hash by applying predicate to each hash item and include only items passed the test. */
@@ -118,7 +122,8 @@ export class HashValidationRule<TElement> extends EnclosingValidationRuleBase<IH
         return <this>new HashValidationRule<TElement>(
             this.elementValidationRule,
             this.skipInvalidElementsProp,
-            predicate);
+            predicate,
+            this.stopOnMainRuleFailure);
     }
 }
 
@@ -126,11 +131,11 @@ export class HashValidationRule<TElement> extends EnclosingValidationRuleBase<IH
 /**
  * Validates a map of objects with the same structure.
  */
-export function hash<TElement>(elementValidationRule: ValidationRule<TElement>): HashValidationRule<TElement> {
+export function hash<TElement>(elementValidationRule: ValidationRule<TElement>, stopOnFailure = true): HashValidationRule<TElement> {
     if (!elementValidationRule) {
         throw new Error("Element validation rule is required.");
     }
 
-    return new HashValidationRule<TElement>(elementValidationRule, false, null);
+    return new HashValidationRule<TElement>(elementValidationRule, false, null, stopOnFailure);
 }
 

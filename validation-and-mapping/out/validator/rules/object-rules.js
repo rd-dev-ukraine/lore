@@ -6,9 +6,10 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var rules_base_1 = require("./rules-base");
 var ObjectValidationRuleCore = (function () {
-    function ObjectValidationRuleCore(properties, expandable) {
+    function ObjectValidationRuleCore(properties, expandable, stopOnFailure) {
         this.properties = properties;
         this.expandable = expandable;
+        this.stopOnFailure = stopOnFailure;
         if (!properties) {
             throw new Error("Properties is required.");
         }
@@ -67,22 +68,24 @@ var ObjectValidationRuleCore = (function () {
 }());
 var ObjectValidationRule = (function (_super) {
     __extends(ObjectValidationRule, _super);
-    function ObjectValidationRule(properties, isExpandable) {
-        _super.call(this, new ObjectValidationRuleCore(properties, isExpandable));
+    function ObjectValidationRule(properties, isExpandable, stopsOnMainRuleFailure) {
+        _super.call(this, new ObjectValidationRuleCore(properties, isExpandable, stopsOnMainRuleFailure));
         this.properties = properties;
         this.isExpandable = isExpandable;
+        this.stopsOnMainRuleFailure = stopsOnMainRuleFailure;
     }
     ObjectValidationRule.prototype.clone = function () {
-        return new ObjectValidationRule(this.properties, this.isExpandable);
+        return new ObjectValidationRule(this.properties, this.isExpandable, this.stopsOnMainRuleFailure);
     };
     ObjectValidationRule.prototype.expandable = function () {
-        return new ObjectValidationRule(this.properties, true);
+        return new ObjectValidationRule(this.properties, true, this.stopsOnMainRuleFailure);
     };
     return ObjectValidationRule;
 }(rules_base_1.EnclosingValidationRuleBase));
 exports.ObjectValidationRule = ObjectValidationRule;
-function obj(properties) {
-    return new ObjectValidationRule(properties, false);
+function obj(properties, stopOnFailure) {
+    if (stopOnFailure === void 0) { stopOnFailure = true; }
+    return new ObjectValidationRule(properties, false, stopOnFailure);
 }
 exports.obj = obj;
 //# sourceMappingURL=object-rules.js.map
