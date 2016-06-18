@@ -1,4 +1,5 @@
 "use strict";
+var should = require("should");
 var utils_1 = require("./utils");
 var validator_1 = require("../validator");
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -59,86 +60,123 @@ exports.default = function () {
             }); });
         });
     });
-    // describe("for any object", () => {
-    //     it("should support .must() validation rule", () => {
-    //         const struct = obj({
-    //             id: num().required(),
-    //             price: num().required(),
-    //             retailPrice: num().required()
-    //         }).must(v => v["price"] < v["retailPrice"], "Price is not profitable");
-    //         const result = validate<any, any>({
-    //             id: 10,
-    //             price: 100,
-    //             retailPrice: 50
-    //         }, struct);
-    //         result.valid.should.be.false();
-    //         result.errors[""][0].should.equal("Price is not profitable");
-    //     });
-    // })
-    // describe("for required nested objects", () => {
-    //     const objectStructure = obj({
-    //         id: num().required().must(v => v > 0),
-    //         title: str().required().must(s => s.length < 10),
-    //         delivery: obj({
-    //             price: num().required().must(v => v > 0),
-    //             address: str().required().notEmpty()
-    //         }, "Delivery data is required")
-    //     });
-    //     it("should fail on nested object missing", () => {
-    //         const invalidObject = {
-    //             id: 10,
-    //             title: "test"
-    //         };
-    //         const result = validate(invalidObject, objectStructure);
-    //         result.valid.should.be.false();
-    //         should(result.errors["delivery"][0]).equal("Delivery data is required");
-    //     });
-    // });
-    // describe("for optional nested objects", () => {
-    //     const objectStructure = obj({
-    //         id: num().required().must(v => v > 0),
-    //         title: str().required().must(s => s.length < 10),
-    //         delivery: objOptional({
-    //             price: num().required().must(v => v > 0),
-    //             address: str().required().notEmpty()
-    //         })
-    //     });
-    //     it("should pass valid object", () => {
-    //         const validObject = {
-    //             id: 10,
-    //             title: "testtitle",
-    //             delivery: {
-    //                 price: 15,
-    //                 address: "test address"
-    //             }
-    //         };
-    //         const result = validate(validObject, objectStructure);
-    //         result.valid.should.be.true();
-    //     });
-    //     it("should pass valid object with null inner object", () => {
-    //         const validObject = {
-    //             id: 10,
-    //             title: "testtitle"
-    //         };
-    //         const result = validate(validObject, objectStructure);
-    //         result.valid.should.be.true();
-    //     });
-    //     it("should fail on invalid inner object data", () => {
-    //         const invalidObject = {
-    //             id: 20,
-    //             title: "test",
-    //             delivery: {
-    //                 address: "test address"
-    //             }
-    //         };
-    //         const result = validate(invalidObject, objectStructure);
-    //         result.valid.should.be.false();
-    //         result.errors.should.not.be.null();
-    //         should(result.errors["delivery.price"]).not.be.null();
-    //         should(result.errors["delivery.price"]).not.length(1);
-    //         should(result.errors["delivery.price"][0]).equal("Value is required");
-    //     })
-    // });
+    describe("for any object", function () {
+        it("should support .after() validation rule", function (done) {
+            var struct = validator_1.rules.obj({
+                id: validator_1.rules.num().required(),
+                price: validator_1.rules.num().required(),
+                retailPrice: validator_1.rules.num().required()
+            }).after(function (v) { return v["price"] < v["retailPrice"]; }, "Price is not profitable");
+            var result = validator_1.validateWithPromise({
+                id: 10,
+                price: 100,
+                retailPrice: 50
+            }, struct)
+                .then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                should(err[""]).deepEqual(["Price is not profitable"]);
+            }); });
+        });
+    });
+    describe("for any object", function () {
+        it("should support .before() validation rule", function (done) {
+            var struct = validator_1.rules.obj({
+                id: validator_1.rules.num().required().must(function (v) { return v > 100; }, "ID must be greater than 100"),
+                price: validator_1.rules.num().required(),
+                retailPrice: validator_1.rules.num().required()
+            }).before(function (v) { return v["price"] < v["retailPrice"]; }, "Price is not profitable");
+            var result = validator_1.validateWithPromise({
+                id: 10,
+                price: 100,
+                retailPrice: 50
+            }, struct)
+                .then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                should(err).deepEqual({
+                    "": ["Price is not profitable"]
+                });
+            }); });
+        });
+    });
+    describe("for required nested objects", function () {
+        var objectStructure = validator_1.rules.obj({
+            id: validator_1.rules.num().required().must(function (v) { return v > 0; }, "ID must be greater than zero"),
+            title: validator_1.rules.str().required().must(function (s) { return s.length < 10; }),
+            delivery: validator_1.rules.obj({
+                price: validator_1.rules.num().required().must(function (v) { return v > 0; }),
+                address: validator_1.rules.str().required().notEmpty()
+            }).required("Delivery data is required")
+        });
+        it("should fail on nested object missing", function (done) {
+            var invalidObject = {
+                id: -10,
+                title: "test"
+            };
+            validator_1.validateWithPromise(invalidObject, objectStructure)
+                .then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    id: ["ID must be greater than zero"],
+                    delivery: ["Delivery data is required"]
+                });
+            }); });
+        });
+    });
+    describe("for optional nested objects", function () {
+        var objectStructure = validator_1.rules.obj({
+            id: validator_1.rules.num().required().must(function (v) { return v > 0; }),
+            title: validator_1.rules.str().required().must(function (s) { return s.length < 10; }),
+            delivery: validator_1.rules.obj({
+                price: validator_1.rules.num().required().must(function (v) { return v > 0; }),
+                address: validator_1.rules.str().required().notEmpty()
+            })
+        });
+        it("should pass valid object", function (done) {
+            var validObject = {
+                id: 10,
+                title: "testtitle",
+                delivery: {
+                    price: 15,
+                    address: "test address"
+                }
+            };
+            validator_1.validateWithPromise(validObject, objectStructure)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.deepEqual({
+                    id: 10,
+                    title: "testtitle",
+                    delivery: {
+                        price: 15,
+                        address: "test address"
+                    }
+                });
+            }); })
+                .catch(function () { return done("Must pass"); });
+        });
+        // it("should pass valid object with null inner object", () => {
+        //     const validObject = {
+        //         id: 10,
+        //         title: "testtitle"
+        //     };
+        //     const result = validate(validObject, objectStructure);
+        //     result.valid.should.be.true();
+        // });
+        // it("should fail on invalid inner object data", () => {
+        //     const invalidObject = {
+        //         id: 20,
+        //         title: "test",
+        //         delivery: {
+        //             address: "test address"
+        //         }
+        //     };
+        //     const result = validate(invalidObject, objectStructure);
+        //     result.valid.should.be.false();
+        //     result.errors.should.not.be.null();
+        //     should(result.errors["delivery.price"]).not.be.null();
+        //     should(result.errors["delivery.price"]).not.length(1);
+        //     should(result.errors["delivery.price"][0]).equal("Value is required");
+        // })
+    });
     // describe("for expandable object", () => {
     //     const structure = expandableObject({
     //         id: num().required().must(v => v > 10),
