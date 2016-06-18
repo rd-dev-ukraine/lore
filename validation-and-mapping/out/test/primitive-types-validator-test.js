@@ -49,39 +49,64 @@ exports.default = function () {
             });
         });
         it("should fail if null string and required rule included", function (done) {
-            validator_1.validateWithPromise(null, validator_1.rules.str().required("NULL!!"))
+            validator_1.validateWithPromise(null, validator_1.rules.str(false).required("NULL!!"))
                 .then(function () { return done("Validation must fail."); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 should(err[""]).deepEqual(["NULL!!"]);
             }); });
         });
+        it("should pass if null string and required rule included and conversion enabled", function (done) {
+            validator_1.validateWithPromise(null, validator_1.rules.str().required("NULL!!"))
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.equal("");
+            }); })
+                .catch(function () { return done("Validation must pass!"); });
+        });
     });
-    // describe("for number", () => {
-    //     it("should validate if value is number", () => {
-    //         const numValue = 233.4;
-    //         const validResult = validate(numValue, num().must(v => v > 200 && v < 300));
-    //         validResult.valid.should.be.true();
-    //         validResult.value.should.equal(numValue);
-    //         const convertibleValue = "2344.4";
-    //         const validConvertedResult = validate(convertibleValue, num());
-    //         validConvertedResult.valid.should.be.true();
-    //         validConvertedResult.value.should.equal(2344.4);
-    //         const notConvertibleValue = "sdfsdf";
-    //         const invalidResult = validate(notConvertibleValue, num());
-    //         invalidResult.valid.should.be.false();
-    //         should(invalidResult.value).be.null();
-    //     });
-    //     it("should pass if null value and no required rule", () => {
-    //         const result = validate(null, num());
-    //         result.valid.should.be.true();
-    //         should(result.value).be.null();
-    //     });
-    //     it("should false if null value and required rule included", () => {
-    //         const result = validate(null, num().required());
-    //         result.valid.should.be.false();
-    //         should(result.value).be.null();
-    //     });
-    // });
+    describe("for number", function () {
+        it("should pass on valid number", function (done) {
+            var numValue = 233.4;
+            validator_1.validateWithPromise(numValue, validator_1.rules.num().must(function (v) { return v > 200 && v < 300; }))
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.equal(numValue);
+            }); })
+                .catch(function (err) { return done("Validation must pass!"); });
+        });
+        it("should convert number if value is convertible", function (done) {
+            var convertibleValue = "2344.4";
+            validator_1.validateWithPromise(convertibleValue, validator_1.rules.num())
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.equal(2344.4);
+            }); })
+                .catch(function () { return done("Validation must pass and convert a number"); });
+        });
+        it("should fail number if value is not convertible", function (done) {
+            var convertibleValue = "sdffsdf";
+            validator_1.validateWithPromise(convertibleValue, validator_1.rules.num(true, "NOT CONVERTIBLE"))
+                .then(function (v) { return done(v); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                should(err[""]).deepEqual(["NOT CONVERTIBLE"]);
+            }); });
+        });
+        it("should fail if value is convertible but conversion disabled", function (done) {
+            var convertibleValue = "2344.4";
+            validator_1.validateWithPromise(convertibleValue, validator_1.rules.num(false, "NOT NUMBER!"))
+                .then(function (v) { return done("Must not convert if conversion disabled!"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                should(err[""]).deepEqual(["NOT NUMBER!"]);
+            }); });
+        });
+        // it("should pass if null value and no required rule", () => {
+        //     const result = validate(null, num());
+        //     result.valid.should.be.true();
+        //     should(result.value).be.null();
+        // });
+        // it("should false if null value and required rule included", () => {
+        //     const result = validate(null, num().required());
+        //     result.valid.should.be.false();
+        //     should(result.value).be.null();
+        // });
+    });
     // describe("with transform", () => {
     //     const numbers = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
     //     const transformNumber = num().required().transform(v => numbers[v], "Undefined");

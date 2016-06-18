@@ -34,7 +34,7 @@ export function validateWithCallback<T>(value: any, done: (result: ValidationRes
                     // Run next validator recursively.
                     runValidator();
                 },
-                value,
+                val,
                 value,
                 value);
         }

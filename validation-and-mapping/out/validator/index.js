@@ -26,7 +26,7 @@ function validateWithCallback(value, done) {
                 valid = valid && success;
                 // Run next validator recursively.
                 runValidator();
-            }, value, value, value);
+            }, val, value, value);
         }
         else {
             if (errorAccumulator.valid()) {

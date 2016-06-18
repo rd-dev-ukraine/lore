@@ -119,11 +119,11 @@ var SequentialRuleSet = (function () {
         }
         var failResult = new Object();
         return this.checkAndConvert(function (done, convertedValue, obj, root) {
-            if (convertedValue === failResult) {
+            if (convertedValue == failResult) {
                 done(errorMessage);
             }
             else {
-                done(null);
+                done();
             }
         }, function (inputValue, validatingObject, rootObject) {
             try {

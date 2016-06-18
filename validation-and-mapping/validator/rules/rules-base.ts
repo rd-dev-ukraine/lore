@@ -1,5 +1,6 @@
 import { ValidationRule, IValidationContext } from "../definitions";
 
+
 /**
  * Base class which can contain a set of rules which runs sequentially, 
  * accumulates errors. 
@@ -161,11 +162,11 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
         return this.checkAndConvert(
             (done, convertedValue, obj, root) => {
-                if (convertedValue === failResult) {
+                if (convertedValue == failResult) {
                     done(errorMessage);
                 }
                 else {
-                    done(null);
+                    done();
                 }
             },
             (inputValue, validatingObject, rootObject) => {
