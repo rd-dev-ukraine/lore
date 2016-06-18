@@ -2,8 +2,8 @@ import { SequentialRuleSet } from "./rules-base";
 
 export class StringRules extends SequentialRuleSet<string> {
 
-    protected clone(): StringRules {
-        return new StringRules();
+    protected clone(): this {
+        return <this>new StringRules();
     }
 
     /** 
@@ -29,7 +29,7 @@ export class StringRules extends SequentialRuleSet<string> {
 
     parseString(errorMessage: string = "Value must be a string."): this {
         return this.parse(v => {
-            if (v === null || v === undefined || isNaN(v)) {
+            if (!v) {
                 return "";
             }
 

@@ -184,7 +184,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
             });
     }
 
-    must(predicate: (value: any, validatingObject?: any, rootObject?: any) => boolean, errorMessage: string = "Value is invalid"): this {
+    must(predicate: (value: T, validatingObject?: any, rootObject?: any) => boolean, errorMessage: string = "Value is invalid"): this {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }

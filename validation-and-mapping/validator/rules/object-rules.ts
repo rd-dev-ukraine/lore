@@ -20,27 +20,29 @@ class ObjectValidationRuleCore<T extends IObject> implements ValidationRule<T> {
         }
     }
 
-    runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
-        if (inputValue === null || inputValue === undefined) {
-            return inputValue;
+    runParse(obj: any, validatingObject?: any, rootObject?: any): T {
+        if (obj === null || obj === undefined) {
+            return obj;
         }
 
         const result = <T>{};
 
         for (let property in this.properties) {
-            const validator = this.properties[property];
-            const sourceValue = inputValue[property];
 
-            result[property] = validator.runParse(sourceValue, inputValue, rootObject);
+            const validator = this.properties[property];
+            const sourceValue = obj[property];
+
+            const parsedValue = validator.runParse(sourceValue, obj, rootObject);
+            result[property] = parsedValue;            
         }
 
         if (this.expandable) {
-            for (let property in inputValue) {
+            for (let property in obj) {
                 if (!this.properties[property]) {
-                    result[property] = inputValue[property];
+                    result[property] = obj[property];
                 }
             }
-        }
+        }        
 
         return result;
     }

@@ -13,20 +13,21 @@ var ObjectValidationRuleCore = (function () {
             throw new Error("Properties is required.");
         }
     }
-    ObjectValidationRuleCore.prototype.runParse = function (inputValue, validatingObject, rootObject) {
-        if (inputValue === null || inputValue === undefined) {
-            return inputValue;
+    ObjectValidationRuleCore.prototype.runParse = function (obj, validatingObject, rootObject) {
+        if (obj === null || obj === undefined) {
+            return obj;
         }
         var result = {};
         for (var property in this.properties) {
             var validator = this.properties[property];
-            var sourceValue = inputValue[property];
-            result[property] = validator.runParse(sourceValue, inputValue, rootObject);
+            var sourceValue = obj[property];
+            var parsedValue = validator.runParse(sourceValue, obj, rootObject);
+            result[property] = parsedValue;
         }
         if (this.expandable) {
-            for (var property in inputValue) {
+            for (var property in obj) {
                 if (!this.properties[property]) {
-                    result[property] = inputValue[property];
+                    result[property] = obj[property];
                 }
             }
         }

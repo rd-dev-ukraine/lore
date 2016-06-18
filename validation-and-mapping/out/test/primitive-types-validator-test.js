@@ -69,6 +69,20 @@ exports.default = function () {
                 err[""].should.deepEqual(["Not empty fail"]);
             }); });
         });
+        it("should fail is must condition is failed", function (done) {
+            validator_1.validateWithPromise("123", validator_1.rules.str().required().must(function (v) { return v.length > 10; }, "Too short!"))
+                .then(function () { return done("Must fail!"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                should(err[""]).deepEqual(["Too short!"]);
+            }); });
+        });
+        it("should pass is must condition is met", function (done) {
+            validator_1.validateWithPromise("1234567890", validator_1.rules.str().required().must(function (v) { return v.length > 3; }, "Too short!"))
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.equal("1234567890");
+            }); })
+                .catch(function () { return done("Must pass!!"); });
+        });
     });
     describe("for number", function () {
         it("should pass on valid number", function (done) {

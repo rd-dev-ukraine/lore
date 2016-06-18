@@ -76,6 +76,22 @@ export default () => {
                     err[""].should.deepEqual(["Not empty fail"]);
                 }));
         });
+
+        it("should fail is must condition is failed", done => {
+            validate("123", rules.str().required().must(v => v.length > 10, "Too short!"))
+                .then(() => done("Must fail!"))
+                .catch(err => assertBlock(done, () => {
+                    should(err[""]).deepEqual(["Too short!"]);
+                }));
+        });
+
+        it("should pass is must condition is met", done => {
+            validate("1234567890", rules.str().required().must(v => v.length > 3, "Too short!"))
+                .then(v => assertBlock(done, () => {
+                    v.should.equal("1234567890");
+                }))
+                .catch(() => done("Must pass!!"));
+        });
     });
 
     describe("for number", () => {

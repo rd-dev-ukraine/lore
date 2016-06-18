@@ -34,7 +34,7 @@ var StringRules = (function (_super) {
     StringRules.prototype.parseString = function (errorMessage) {
         if (errorMessage === void 0) { errorMessage = "Value must be a string."; }
         return this.parse(function (v) {
-            if (v === null || v === undefined || isNaN(v)) {
+            if (!v) {
                 return "";
             }
             return "" + v;
