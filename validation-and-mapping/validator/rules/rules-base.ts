@@ -11,36 +11,37 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
     protected abstract clone(): this;
 
+    /** Runs parsing on all rules. */
+    runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
+        return this.rules
+            .reduce((currentValue, rule) => rule.runParse(currentValue, validatingObject, rootObject), inputValue);
+    }
+
     /** Runs all chained rules. */
-    run(context: IValidationContext,
-        done: (convertedValue: T, success: boolean) => void,
-        inputValue: any,
+    runValidate(context: IValidationContext,
+        doneCallback: (success: boolean) => void,
+        parsedValue: any,
         validatingObject?: any,
         rootObject?: any): void {
         if (!context) {
             throw new Error("context is required.");
         }
-        if (!done) {
+        if (!doneCallback) {
             throw new Error("done callback is required.");
         }
 
         let allRulesValid = true;
-        let value = inputValue;
         const rulesToRun = [...this.rules];
 
         const runRule = () => {
             const rule = rulesToRun.shift();
             if (rule) {
-                rule.run(context,
-                    (convertedValue, success) => {
-                        if (success) {
-                            value = convertedValue;
-                        }
-                        else {
-                            if (this.stopOnFirstFailureValue) {
-                                done(value, false);
-                                return;
-                            }
+                rule.runValidate(
+                    context,
+                    (success) => {
+                        if (!success && this.stopOnFirstFailureValue) {
+                            doneCallback(false);
+                            return;
                         }
 
                         allRulesValid = allRulesValid && success;
@@ -48,19 +49,19 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
                         // Runs next rule recursively
                         runRule();
                     },
-                    value,
+                    parsedValue,
                     validatingObject,
                     rootObject);
             }
             else {
-                done(value, allRulesValid);
+                doneCallback(allRulesValid);
             }
         };
 
         runRule();
     }
 
-    protected withRule(rule: ValidationRule<T>): this {
+    protected withRule(rule: ValidationRule<T>, putRuleFirst: boolean = false): this {
         if (!rule) {
             throw new Error("rule is required");
         }
@@ -68,37 +69,58 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
         const copy = this.clone();
 
         copy.stopOnFirstFailureValue = this.stopOnFirstFailureValue;
-        copy.rules = [...this.rules, rule];
+
+        if (putRuleFirst) {
+            copy.rules = [rule, ...this.rules];
+        }
+        else {
+            copy.rules = [...this.rules, rule];
+        }
+
         return copy;
     }
 
-    /** Adds a rule which uses custom function for validation and converting. */
-    checkAndConvert(fn: (done: (convertedValue: T, errorMessage?: string) => void, inputValue: any, validatingObject?: any, rootObject?: any) => void) {
-        if (!fn) {
-            throw new Error("Check and convert function is required.");
+    /** 
+     * Adds a rule which uses custom functions for validation and converting. 
+     * If parsing function is not provided value is passed to validation function without conversion. 
+     */
+    checkAndConvert(
+        validationFn: (doneCallback: (errorMessage?: string) => void, parsedValue: any, validatingObject?: any, rootObject?: any) => void,
+        parseFn?: (inputValue: any, validatingObject?: any, rootObject?: any) => T,
+        putRuleFirst: boolean = false) {
+
+        if (!validationFn) {
+            throw new Error("Validation function is required.");
         }
 
+        parseFn = (parseFn || (input => input));
+
         return this.withRule({
-            run(context: IValidationContext,
-                done: (convertedValue: T, success: boolean) => void,
+
+            runParse: parseFn,
+
+            runValidate(
+                context: IValidationContext,
+                done: (success: boolean) => void,
                 inputValue: any,
                 validatingObject?: any,
                 rootObject?: any): void {
 
-                fn((convertedValue, errorMessage) => {
-                    if (errorMessage) {
-                        context.reportError(errorMessage);
-                        done(null, false);
-                    }
-                    else {
-                        done(convertedValue, true);
-                    }
-                },
+                validationFn(
+                    (errorMessage) => {
+                        if (errorMessage) {
+                            context.reportError(errorMessage);
+                            done(false);
+                        }
+                        else {
+                            done(true);
+                        }
+                    },
                     inputValue,
                     validatingObject,
                     rootObject);
             }
-        });
+        }, putRuleFirst);
     }
 
     /** Fails if input value is null or undefined. */
@@ -109,43 +131,54 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
         return this.checkAndConvert((done, input) => {
             if (input === null || input === undefined) {
-                done(null, errorMessage);
+                done(errorMessage);
             }
             else {
-                done(input);
+                done();
             }
-        })
+        });
     }
 
     /** 
-     * Converts input value by applying transformation function.
+     * Parses input value.
+     * Parse rules runs first.
      * If transformation function returns null or undefined or throws an error fails with specified error message.
      */
-    transform(transformFn: (value: any, entity?: any, rootEntity?: any) => T, errorMessage: string = "Conversion failed"): this {
-        if (!transformFn) {
+    parse(convertFn: (inputValue: any, validatingObject?: any, rootObject?: any) => T, errorMessage: string = "Conversion failed"): this {
+        if (!convertFn) {
             throw new Error("Transformation function is required.")
         }
         if (!errorMessage) {
             throw new Error("Error message is required.");
         }
 
-        return this.checkAndConvert((done, input, obj, root) => {
-            try {
-                const converted = transformFn(input, obj, root);
-                if (converted === null || converted === undefined) {
-                    done(null, errorMessage);
+        const failResult = new Object();
+
+        return this.checkAndConvert(
+            (done, convertedValue, obj, root) => {
+                if (convertedValue === failResult) {
+                    done(errorMessage);
                 }
                 else {
-                    done(converted);
+                    done(null);
                 }
-            }
-            catch (e) {
-                done(null, errorMessage);
-            };
-        });
+            },
+            (inputValue, validatingObject, rootObject) => {
+                try {
+                    const converted = convertFn(inputValue, validatingObject, rootObject);
+                    if (converted === null || converted === undefined) {
+                        return <T><any>failResult;
+                    }
+
+                    return converted;
+                }
+                catch (e) {
+                    return <T><any>failResult;
+                }
+            });
     }
 
-    must(predicate: (value: any, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): this {
+    must(predicate: (value: any, validatingObject?: any, rootObject?: any) => boolean, errorMessage: string = "Value is invalid"): this {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
@@ -154,7 +187,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
         }
         return this.checkAndConvert((done, input, obj, root) => {
             if (!predicate(input, obj, root)) {
-                done(null, errorMessage);
+                done(errorMessage);
             }
             else {
                 done(input);

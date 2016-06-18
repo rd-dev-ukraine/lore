@@ -2,6 +2,7 @@
 var ErrorAccumulator = (function () {
     function ErrorAccumulator() {
         this.errorHash = {};
+        this.isValid = false;
     }
     ErrorAccumulator.prototype.report = function (path, errorMessage) {
         if (!errorMessage) {
@@ -9,9 +10,13 @@ var ErrorAccumulator = (function () {
         }
         var messages = this.errorHash[path] = (this.errorHash[path] || []);
         messages.push(errorMessage);
+        this.isValid = false;
     };
     ErrorAccumulator.prototype.errors = function () {
         return this.errorHash;
+    };
+    ErrorAccumulator.prototype.valid = function () {
+        return this.isValid;
     };
     return ErrorAccumulator;
 }());

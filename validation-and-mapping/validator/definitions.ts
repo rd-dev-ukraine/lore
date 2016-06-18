@@ -40,22 +40,39 @@ export interface IValidationContext {
 
 /**
  * Represents a single piece of validation logic.
+ * 
+ * Each validation rule consists of two stages - parsing and validation.
+ * Parsing is sync and must converts the type of the input value.
+ * Validation is optionally async and should checks parsed value for validity.
+ * 
+ * Parsing stage is unable to report errors. Instead it should return a value recognizable by validation stage and report errors there. 
+ * 
+ * Validation stage receives parsed value. 
+ * If value is complex like object or array the parsing should be performed on whole object before validation.
+ * This enables to pass parsed values as validatingObject parameter. 
  */
 export interface ValidationRule<T> {
+
+    /**
+     * Parse value before performing a validation.
+     * If parsing is failed it should return some value recognizable by the validate method.
+     * 
+     */
+    runParse(inputValue: any, validatingObject?: any, rootObject?: any): T;
 
     /**
      * Run validation logic on specified input value.
      * 
      * param @context Validation context allows report errors for current value and create context for nested validation.
-     * param @done Callback called when validation and conversion is completed. 
-     *             Accepts convertedValue or null if conversion failed and success parameter indicates whether conversion was successful. 
-     * param @inputValue Input value to validate and convert.
+     * param @doneCallback Callback called when validation is completed. 
+     *             Accepts boolean value determines whether conversion was successful. 
+     * param @parsedValue Parsed value returned by parsing stage.
      * param @validatingObject Object which property or element being validated currently.
      * param @rootObject Object on which validation was run.
      */
-    run(context: IValidationContext,
-        done: (convertedValue: T, success: boolean) => void,
-        inputValue: any,
+    runValidate(context: IValidationContext,
+        doneCallback: (success: boolean) => void,
+        parsedValue: any,
         validatingObject?: any,
         rootObject?: any): void;
 }

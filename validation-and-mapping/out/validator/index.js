@@ -5,28 +5,49 @@ function __export(m) {
 var error_accumulator_1 = require("./error-accumulator");
 var validation_context_1 = require("./validation-context");
 __export(require("./rules"));
-function validate(value) {
+function validate(value, done) {
     var validators = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        validators[_i - 1] = arguments[_i];
+    for (var _i = 2; _i < arguments.length; _i++) {
+        validators[_i - 2] = arguments[_i];
+    }
+    if (!done) {
+        throw new Error("Done callback is required.");
     }
     if (!validators || !validators.length) {
         throw new Error("At least one validator is required");
     }
     var errorAccumulator = new error_accumulator_1.default();
     var validationContext = new validation_context_1.default("", errorAccumulator);
-    var result = validators.reduce(function (val, validator) { return validator.run(val, validationContext, val, val) || value; }, value);
-    var errors = errorAccumulator.errors();
-    if (Object.keys(errors).length) {
-        return {
-            valid: false,
-            value: null,
-            errors: errors
-        };
-    }
-    return {
-        valid: true,
-        value: result
+    var val = value;
+    var runValidator = function () {
+        var validator = validators.shift();
+        if (validator) {
+            validator.run(validationContext, function (convertedValue, success) {
+                if (success) {
+                    val = convertedValue;
+                }
+                // Run next validator recursively.
+                runValidator();
+            }, value, value, value);
+        }
+        else {
+            if (errorAccumulator.valid()) {
+                var validationResult = {
+                    valid: true,
+                    convertedValue: val
+                };
+                done(validationResult);
+            }
+            else {
+                var validationResult = {
+                    valid: false,
+                    convertedValue: null,
+                    errors: errorAccumulator.errors()
+                };
+                done(validationResult);
+            }
+        }
+        runValidator();
     };
 }
 exports.validate = validate;
