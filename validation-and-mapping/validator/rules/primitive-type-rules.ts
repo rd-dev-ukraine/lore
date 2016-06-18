@@ -127,10 +127,11 @@ export class NumberRules extends SequentialRuleSet<number> {
      * Checks if value is number. Null or undefined values are passed as correct. 
      * This rule is applied automatically, don't call it. 
      */
-    isNumber(errorMessage: string = "Value is not valid number"): this {
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
+    isNumber(options?: RuleOptions): this {
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value is not valid number.",
+            stopOnFailure: true
+        });
 
         return this.checkAndConvert(
             (done, value) => {
@@ -140,29 +141,32 @@ export class NumberRules extends SequentialRuleSet<number> {
                 }
 
                 if (typeof value !== "number") {
-                    done(errorMessage);
+                    done(options.errorMessage);
                     return;
                 }
 
                 done();
-            }
-        );
+            },
+            null,
+            true,
+            options.stopOnFailure);
     }
 
     /**
      * Parses number.
      */
-    parseNumber(errorMessage: string = "Value is not valid number."): this {
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
+    parseNumber(options?: RuleOptions): this {
+        options = ensureRuleOptions(options, {
+            errorMessage: "Value is not valid number.",
+            stopOnFailure: false
+        });
 
         const failResult = new Object();
 
         return this.checkAndConvert(
             (done, convertedValue, obj, root) => {
                 if (convertedValue == failResult) {
-                    done(errorMessage);
+                    done(options.errorMessage);
                 }
                 else {
                     done();
@@ -179,29 +183,37 @@ export class NumberRules extends SequentialRuleSet<number> {
                 }
 
                 return converted;
-            });
+            },
+            false,
+            options.stopOnFailure);
     }
 }
 
 
-export function str(convert: boolean = true, errorMessage: string = "Value is not a string."): StringRules {
-    if (!convert && !errorMessage) {
-        throw new Error("Error message is required");
-    }
+export function str(convert: boolean = true, options?: RuleOptions): StringRules {
+    options = ensureRuleOptions(options, {
+        errorMessage: "Value is not a string.",
+        stopOnFailure: true
+    });
 
     if (convert) {
-        return new StringRules().parseString();
+        return new StringRules().parseString(options);
     }
     else {
-        return new StringRules().isString(errorMessage);
+        return new StringRules().isString(options);
     }
 }
 
-export function num(convert: boolean = true, errorMessage: string = "Value is not a valid number"): NumberRules {
+export function num(convert: boolean = true, options?: RuleOptions): NumberRules {
+    options = ensureRuleOptions(options, {
+        errorMessage: "Value is not a valid number.",
+        stopOnFailure: true
+    });
+
     if (convert) {
-        return new NumberRules().parseNumber(errorMessage);
+        return new NumberRules().parseNumber(options);
     }
     else {
-        return new NumberRules().isNumber(errorMessage);
+        return new NumberRules().isNumber(options);
     }
 }

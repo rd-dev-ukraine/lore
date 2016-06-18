@@ -106,35 +106,35 @@ var NumberRules = (function (_super) {
      * Checks if value is number. Null or undefined values are passed as correct.
      * This rule is applied automatically, don't call it.
      */
-    NumberRules.prototype.isNumber = function (errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value is not valid number"; }
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
+    NumberRules.prototype.isNumber = function (options) {
+        options = rules_base_1.ensureRuleOptions(options, {
+            errorMessage: "Value is not valid number.",
+            stopOnFailure: true
+        });
         return this.checkAndConvert(function (done, value) {
             if (value === null || value === undefined) {
                 done();
                 return;
             }
             if (typeof value !== "number") {
-                done(errorMessage);
+                done(options.errorMessage);
                 return;
             }
             done();
-        });
+        }, null, true, options.stopOnFailure);
     };
     /**
      * Parses number.
      */
-    NumberRules.prototype.parseNumber = function (errorMessage) {
-        if (errorMessage === void 0) { errorMessage = "Value is not valid number."; }
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
+    NumberRules.prototype.parseNumber = function (options) {
+        options = rules_base_1.ensureRuleOptions(options, {
+            errorMessage: "Value is not valid number.",
+            stopOnFailure: false
+        });
         var failResult = new Object();
         return this.checkAndConvert(function (done, convertedValue, obj, root) {
             if (convertedValue == failResult) {
-                done(errorMessage);
+                done(options.errorMessage);
             }
             else {
                 done();
@@ -148,33 +148,36 @@ var NumberRules = (function (_super) {
                 return failResult;
             }
             return converted;
-        });
+        }, false, options.stopOnFailure);
     };
     return NumberRules;
 }(rules_base_1.SequentialRuleSet));
 exports.NumberRules = NumberRules;
-function str(convert, errorMessage) {
+function str(convert, options) {
     if (convert === void 0) { convert = true; }
-    if (errorMessage === void 0) { errorMessage = "Value is not a string."; }
-    if (!convert && !errorMessage) {
-        throw new Error("Error message is required");
-    }
+    options = rules_base_1.ensureRuleOptions(options, {
+        errorMessage: "Value is not a string.",
+        stopOnFailure: true
+    });
     if (convert) {
-        return new StringRules().parseString();
+        return new StringRules().parseString(options);
     }
     else {
-        return new StringRules().isString(errorMessage);
+        return new StringRules().isString(options);
     }
 }
 exports.str = str;
-function num(convert, errorMessage) {
+function num(convert, options) {
     if (convert === void 0) { convert = true; }
-    if (errorMessage === void 0) { errorMessage = "Value is not a valid number"; }
+    options = rules_base_1.ensureRuleOptions(options, {
+        errorMessage: "Value is not a valid number.",
+        stopOnFailure: true
+    });
     if (convert) {
-        return new NumberRules().parseNumber(errorMessage);
+        return new NumberRules().parseNumber(options);
     }
     else {
-        return new NumberRules().isNumber(errorMessage);
+        return new NumberRules().isNumber(options);
     }
 }
 exports.num = num;
