@@ -200,3 +200,192 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
         })
     }
 }
+
+/** 
+ * Encapsulates rule enclosed in set of rules run before and after the rule.
+ * 
+ * Parsing only run for main rule. All other rules uses main rule parsing result as input.
+ * 
+ * The main rule is run only if all rules run before has been run successfuly.
+ * The rules to run after would be only run if main rule run successfuly.
+ * 
+ * Enclosing rule would be run successfuly only if all rules (before, main and after) has run successfuly.  
+ */
+export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T> {
+    private rulesBefore: ValidationRule<T>[] = [];
+    private rulesAfter: ValidationRule<T>[] = [];
+
+    constructor(protected rule: ValidationRule<T>) {
+        if (!rule) {
+            throw new Error("Validation rule is required.");
+        }
+    }
+
+    runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
+        return this.rule.runParse(inputValue, validatingObject, rootObject);
+    }
+
+    runValidate(
+        context: IValidationContext,
+        doneCallback: (success: boolean) => void,
+        obj: any,
+        validatingObject?: any,
+        rootObject?: any): void {
+
+        const all = [
+            ...(this.rulesBefore || []),
+            this.rule,
+            ...(this.rulesAfter || [])
+        ];
+
+        this.runRuleSet(
+            all,
+            context,
+            doneCallback,
+            obj,
+            validatingObject,
+            rootObject
+        );
+    }
+
+    private runRuleSet(
+        rules: ValidationRule<T>[],
+        context: IValidationContext,
+        doneCallback: (success: boolean) => void,
+        obj: any,
+        validatingObject?: any,
+        rootObject?: any) {
+
+        const rulesToRun = [...rules];
+
+        const run = () => {
+            const rule = rulesToRun.shift();
+            if (rule) {
+                rule.runValidate(
+                    context,
+                    success => {
+                        if (!success) {
+                            doneCallback(false);
+                            return;
+                        }
+
+                        run();
+                    },
+                    obj,
+                    validatingObject,
+                    rootObject
+                );
+            }
+            else {
+                doneCallback(true);
+            }
+
+        };
+
+        run();
+    }
+
+    protected abstract clone(): this;
+
+    private copy(): this {
+        const result = this.clone();
+
+        result.rulesBefore = [...this.rulesBefore];
+        result.rulesAfter = [...this.rulesAfter];
+
+        return result;
+    }
+
+    /** Disables null object. */
+    required(errorMessage = "Object is required."): this {
+        if (!errorMessage) {
+            throw new Error("Error message is required");
+        }
+
+        const result = this.copy();
+
+        result.rulesBefore = [
+            any<T>(v => v !== null && v !== undefined, errorMessage),
+            ...result.rulesBefore];
+
+        return result;
+    }
+
+    /** Adds a rule which is run before validation. */
+    runBefore(rule: ValidationRule<T>): this {
+        if (!rule) {
+            throw new Error("rule is required");
+        }
+
+        const result = this.copy();
+        result.rulesBefore = [...this.rulesBefore, rule];
+
+        return result;
+    }
+
+    /** Adds a rule which is run after validation. */
+    runAfter(rule: ValidationRule<T>): this {
+        if (!rule) {
+            throw new Error("rule is required");
+        }
+
+        const result = this.copy();
+        result.rulesAfter = [...this.rulesAfter, rule];
+
+        return result;
+    }
+
+
+    before(predicate: (obj: T, validatingObject?: any, rootObject?: any) => boolean, errorMessage = "Object is not valid."): this {
+        if (!predicate) {
+            throw new Error("Predicate is required.");
+        }
+        if (!errorMessage) {
+            throw new Error("Error message is required.");
+        }
+
+        return this.runBefore(any<T>(predicate, errorMessage));
+    }
+
+    after(predicate: (obj: T, validatingObject?: any, rootObject?: any) => boolean, errorMessage = "Object is not valid."): this {
+        if (!predicate) {
+            throw new Error("Predicate is required.");
+        }
+        if (!errorMessage) {
+            throw new Error("Error message is required.");
+        }
+
+        return this.runAfter(any<T>(predicate, errorMessage));
+    }
+}
+
+export class EmptyRule<T> implements ValidationRule<T> {
+    runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
+        return <T>inputValue;
+    }
+
+    /** Runs all chained rules. */
+    runValidate(context: IValidationContext,
+        doneCallback: (success: boolean) => void,
+        parsedValue: any,
+        validatingObject?: any,
+        rootObject?: any): void {
+        doneCallback(true);
+    }
+}
+
+export class AnyRules<T> extends SequentialRuleSet<T> {
+    protected clone(): AnyRules<T> {
+        return new AnyRules<T>();
+    }
+}
+
+/** Validates any value using given predicate. */
+export function any<T>(predicate?: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): AnyRules<T> {
+    if (!errorMessage) {
+        throw new Error("Error message is required");
+    }
+
+    predicate = predicate || (v => true);
+    return new AnyRules<T>().must(predicate, errorMessage);
+}

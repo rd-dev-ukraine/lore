@@ -141,11 +141,6 @@ export class NumberRules extends SequentialRuleSet<number> {
 
 }
 
-export class AnyRules<T> extends SequentialRuleSet<T> {
-    protected clone(): AnyRules<T> {
-        return new AnyRules<T>();
-    }
-}
 
 export function str(errorMessage: string = "Value is not a string.", convert: boolean = true): StringRules {
     if (!errorMessage) {
@@ -167,13 +162,4 @@ export function num(convert: boolean = true, errorMessage: string = "Value is no
     else {
         return new NumberRules().isNumber(errorMessage);
     }
-}
-
-export function any<T>(predicate?: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): AnyRules<T> {
-    if (!errorMessage) {
-        throw new Error("Error message is required");
-    }
-
-    predicate = predicate || (v => true);
-    return new AnyRules<T>().must(predicate, errorMessage);
 }

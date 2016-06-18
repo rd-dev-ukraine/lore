@@ -1,4 +1,5 @@
 import { ValidationRule, IValidationContext } from "../definitions";
+import { EnclosingValidationRuleBase  } from "./rules-base";
 
 export interface IPropertyValidationHash {
     [property: string]: ValidationRule<any>;
@@ -8,44 +9,15 @@ export interface IObject {
     [property: string]: any;
 }
 
-export class ObjectValidationRules<T extends IObject> implements ValidationRule<T> {
-    protected settings: {
-        expandable: boolean;
-        required: boolean;
-        requiredError: string;
-        [setting: string]: any;
-    } = {
-        expandable: false,
-        required: false,
-        requiredError: ""
-    };
+class ObjectValidationRuleCore<T extends IObject> implements ValidationRule<T> {
 
-    constructor(private properties: IPropertyValidationHash) {
+    constructor(
+        private properties: IPropertyValidationHash,
+        private expandable: boolean) {
 
         if (!properties) {
             throw new Error("Properties is required.");
         }
-    }
-
-    /** Enables or disables validating value to have properties not defined in property validation hash. */
-    expandable(isExpandable = true): this {
-        const result = this.clone();
-        result.settings.expandable = isExpandable;
-        return result;
-    }
-
-    /** Enables or disables null object. */
-    required(isRequired = true, errorMessage = "Object is required."): this {
-        if (!errorMessage) {
-            throw new Error("Error message is required");
-        }
-
-        const result = this.clone();
-
-        result.settings.required = isRequired;
-        result.settings.requiredError = errorMessage;
-
-        return result;
     }
 
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
@@ -64,7 +36,7 @@ export class ObjectValidationRules<T extends IObject> implements ValidationRule<
             }
         }
 
-        if (this.settings.expandable) {
+        if (this.expandable) {
             for (let property in inputValue) {
                 if (!this.properties[property]) {
                     result[property] = inputValue[property];
@@ -78,17 +50,9 @@ export class ObjectValidationRules<T extends IObject> implements ValidationRule<
     runValidate(
         context: IValidationContext,
         doneCallback: (success: boolean) => void,
-        parsedValue: any,
+        obj: any,
         validatingObject?: any,
         rootObject?: any): void {
-
-        if (this.settings.required) {
-            if (parsedValue === null || parsedValue === undefined) {
-                context.reportError(this.settings.requiredError);
-                doneCallback(false);
-                return;
-            }
-        }
 
         const propertyRules: Array<{ property: string; validator: ValidationRule<any>; }> = [];
         for (let property in this.properties) {
@@ -106,7 +70,7 @@ export class ObjectValidationRules<T extends IObject> implements ValidationRule<
             const rule = propertyRules.shift();
             if (rule) {
                 const propertyContext = context.property(rule.property);
-                const valueToValidate = parsedValue[rule.property];
+                const propertyValue = obj[rule.property];
                 rule.validator.runValidate(
                     propertyContext,
                     (success) => {
@@ -114,8 +78,8 @@ export class ObjectValidationRules<T extends IObject> implements ValidationRule<
 
                         run();
                     },
-                    valueToValidate,
-                    parsedValue,
+                    propertyValue,
+                    obj,
                     rootObject
                 );
             }
@@ -126,12 +90,24 @@ export class ObjectValidationRules<T extends IObject> implements ValidationRule<
 
         run();
     }
+}
+
+export class ObjectValidationRule<T extends IObject> extends EnclosingValidationRuleBase<T> {
+
+    constructor(private properties: IPropertyValidationHash,
+        private isExpandable: boolean) {
+        super(new ObjectValidationRuleCore<T>(properties, isExpandable));
+    }
 
     protected clone(): this {
-        const result = new ObjectValidationRules<T>(this.properties);
-        result.settings = JSON.parse(JSON.stringify(this.settings));
+        return <this>new ObjectValidationRule<T>(this.properties, this.isExpandable);
+    }
 
-        return <this>result;
+    expandable(): this {
+        return <this>new ObjectValidationRule<T>(this.properties, false);
     }
 }
 
+export function obj<T>(properties: IPropertyValidationHash): ObjectValidationRule<T> {
+    return new ObjectValidationRule<T>(properties, false);
+}
