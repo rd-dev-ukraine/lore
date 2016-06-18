@@ -141,7 +141,9 @@ export default () => {
             id: rules.num().required().must(v => v > 0),
             title: rules.str().required().must(s => s.length < 10),
             delivery: rules.obj({
-                price: rules.num().required().must(v => v > 0),
+                price: rules.num()
+                            .required("Price is required")
+                            .must(v => v > 0, "Price must be greater than zero"),
                 address: rules.str().required().notEmpty()
             })
         });
@@ -190,23 +192,23 @@ export default () => {
                 });
         });
 
-        // it("should fail on invalid inner object data", () => {
-        //     const invalidObject = {
-        //         id: 20,
-        //         title: "test",
-        //         delivery: {
-        //             address: "test address"
-        //         }
-        //     };
+        it("should fail on invalid inner object data", done => {
+            const invalidObject = {
+                id: 20,
+                title: "test",
+                delivery: {
+                    address: "test address"
+                }
+            };
 
-        //     const result = validate(invalidObject, objectStructure);
-
-        //     result.valid.should.be.false();
-        //     result.errors.should.not.be.null();
-        //     should(result.errors["delivery.price"]).not.be.null();
-        //     should(result.errors["delivery.price"]).not.length(1);
-        //     should(result.errors["delivery.price"][0]).equal("Value is required");
-        // })
+            validate(invalidObject, objectStructure)
+                .then(() => done("Must fail!!"))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "delivery.price": ["Price is required", "Price must be greater than zero"]
+                    });
+                }));
+        });
     });
 
     // describe("for expandable object", () => {

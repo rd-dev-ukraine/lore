@@ -127,16 +127,29 @@ export class NumberRules extends SequentialRuleSet<number> {
             throw new Error("Error message is required");
         }
 
-        return this.parse(input => {
-            const result = parseFloat(input);
-            if (result === null || result === undefined || isNaN(result)) {
-                return null;
-            }
-            else {
-                return result;
-            }
+        const failResult = new Object();
 
-        }, errorMessage);
+        return this.checkAndConvert(
+            (done, convertedValue, obj, root) => {
+                if (convertedValue == failResult) {
+                    done(errorMessage);
+                }
+                else {
+                    done();
+                }
+            },
+            (inputValue, validatingObject, rootObject) => {
+                if (inputValue === null || inputValue === undefined) {
+                    return inputValue;
+                }
+
+                const converted = parseFloat(inputValue);
+                if (converted === null || converted === undefined || isNaN(converted)) {
+                    return <number><any>failResult;
+                }
+
+                return converted;
+            });
     }
 
 }

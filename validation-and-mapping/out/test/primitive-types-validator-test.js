@@ -117,8 +117,15 @@ exports.default = function () {
                 should(err[""]).deepEqual(["NOT NUMBER!"]);
             }); });
         });
-        it("should pass if null value and no required rule", function (done) {
+        it("should pass without conversion if null value and no required rule", function (done) {
             validator_1.validateWithPromise(null, validator_1.rules.num(false))
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                should(v).be.null();
+            }); })
+                .catch(function () { return done("Validation must pass!"); });
+        });
+        it("should pass with conversion if null value and no required rule", function (done) {
+            validator_1.validateWithPromise(null, validator_1.rules.num())
                 .then(function (v) { return utils_1.assertBlock(done, function () {
                 should(v).be.null();
             }); })

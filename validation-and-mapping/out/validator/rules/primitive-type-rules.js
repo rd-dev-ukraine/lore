@@ -124,15 +124,24 @@ var NumberRules = (function (_super) {
         if (!errorMessage) {
             throw new Error("Error message is required");
         }
-        return this.parse(function (input) {
-            var result = parseFloat(input);
-            if (result === null || result === undefined || isNaN(result)) {
-                return null;
+        var failResult = new Object();
+        return this.checkAndConvert(function (done, convertedValue, obj, root) {
+            if (convertedValue == failResult) {
+                done(errorMessage);
             }
             else {
-                return result;
+                done();
             }
-        }, errorMessage);
+        }, function (inputValue, validatingObject, rootObject) {
+            if (inputValue === null || inputValue === undefined) {
+                return inputValue;
+            }
+            var converted = parseFloat(inputValue);
+            if (converted === null || converted === undefined || isNaN(converted)) {
+                return failResult;
+            }
+            return converted;
+        });
     };
     return NumberRules;
 }(rules_base_1.SequentialRuleSet));

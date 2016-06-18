@@ -127,7 +127,9 @@ exports.default = function () {
             id: validator_1.rules.num().required().must(function (v) { return v > 0; }),
             title: validator_1.rules.str().required().must(function (s) { return s.length < 10; }),
             delivery: validator_1.rules.obj({
-                price: validator_1.rules.num().required().must(function (v) { return v > 0; }),
+                price: validator_1.rules.num()
+                    .required("Price is required")
+                    .must(function (v) { return v > 0; }, "Price must be greater than zero"),
                 address: validator_1.rules.str().required().notEmpty()
             })
         });
@@ -171,21 +173,22 @@ exports.default = function () {
                 done("Must pass!");
             });
         });
-        // it("should fail on invalid inner object data", () => {
-        //     const invalidObject = {
-        //         id: 20,
-        //         title: "test",
-        //         delivery: {
-        //             address: "test address"
-        //         }
-        //     };
-        //     const result = validate(invalidObject, objectStructure);
-        //     result.valid.should.be.false();
-        //     result.errors.should.not.be.null();
-        //     should(result.errors["delivery.price"]).not.be.null();
-        //     should(result.errors["delivery.price"]).not.length(1);
-        //     should(result.errors["delivery.price"][0]).equal("Value is required");
-        // })
+        it("should fail on invalid inner object data", function (done) {
+            var invalidObject = {
+                id: 20,
+                title: "test",
+                delivery: {
+                    address: "test address"
+                }
+            };
+            validator_1.validateWithPromise(invalidObject, objectStructure)
+                .then(function () { return done("Must fail!!"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    "delivery.price": ["Price is required", "Price must be greater than zero"]
+                });
+            }); });
+        });
     });
     // describe("for expandable object", () => {
     //     const structure = expandableObject({

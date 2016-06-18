@@ -131,9 +131,16 @@ export default () => {
                 }));
         });
 
-
-        it("should pass if null value and no required rule", done => {
+        it("should pass without conversion if null value and no required rule", done => {
             validate(null, rules.num(false))
+                .then(v => assertBlock(done, () => {
+                    should(v).be.null();
+                }))
+                .catch(() => done("Validation must pass!"));
+        });
+
+        it("should pass with conversion if null value and no required rule", done => {
+            validate(null, rules.num())
                 .then(v => assertBlock(done, () => {
                     should(v).be.null();
                 }))
