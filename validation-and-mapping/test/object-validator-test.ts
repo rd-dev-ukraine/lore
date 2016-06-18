@@ -170,15 +170,25 @@ export default () => {
                 .catch(() => done("Must pass"));
         });
 
-        // it("should pass valid object with null inner object", () => {
-        //     const validObject = {
-        //         id: 10,
-        //         title: "testtitle"
-        //     };
+        it("should pass valid object with null inner object", done => {
+            const validObject = {
+                id: 10,
+                title: "testtitle"
+            };
 
-        //     const result = validate(validObject, objectStructure);
-        //     result.valid.should.be.true();
-        // });
+            validate(validObject, objectStructure)
+                .then(v => assertBlock(done, () => {
+                    v.should.deepEqual({
+                        id: 10,
+                        title: "testtitle",
+                        delivery: undefined
+                    });
+                }))
+                .catch(err => {
+                    console.dir(err);
+                    done("Must pass!");
+                });
+        });
 
         // it("should fail on invalid inner object data", () => {
         //     const invalidObject = {

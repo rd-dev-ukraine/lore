@@ -153,14 +153,24 @@ exports.default = function () {
             }); })
                 .catch(function () { return done("Must pass"); });
         });
-        // it("should pass valid object with null inner object", () => {
-        //     const validObject = {
-        //         id: 10,
-        //         title: "testtitle"
-        //     };
-        //     const result = validate(validObject, objectStructure);
-        //     result.valid.should.be.true();
-        // });
+        it("should pass valid object with null inner object", function (done) {
+            var validObject = {
+                id: 10,
+                title: "testtitle"
+            };
+            validator_1.validateWithPromise(validObject, objectStructure)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.deepEqual({
+                    id: 10,
+                    title: "testtitle",
+                    delivery: undefined
+                });
+            }); })
+                .catch(function (err) {
+                console.dir(err);
+                done("Must pass!");
+            });
+        });
         // it("should fail on invalid inner object data", () => {
         //     const invalidObject = {
         //         id: 20,

@@ -34,6 +34,10 @@ var ObjectValidationRuleCore = (function () {
         return result;
     };
     ObjectValidationRuleCore.prototype.runValidate = function (context, doneCallback, obj, validatingObject, rootObject) {
+        if (obj === null || obj === undefined) {
+            doneCallback(true);
+            return;
+        }
         var propertyRules = [];
         for (var property in this.properties) {
             var validator = this.properties[property];
