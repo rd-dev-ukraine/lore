@@ -68,6 +68,14 @@ export default () => {
                 }))
                 .catch(() => done("Validation must pass!"));
         });
+
+        it("should fail if notEmpty rule added for empty string", done => {
+            validate("", rules.str().required("Required fail").notEmpty("Not empty fail"))
+                .then(v => done("Validation must fail"))
+                .catch(err => assertBlock(done, () => {
+                    err[""].should.deepEqual(["Not empty fail"]);
+                }));
+        });
     });
 
     describe("for number", () => {
@@ -108,46 +116,42 @@ export default () => {
         });
 
 
-        // it("should pass if null value and no required rule", () => {
-        //     const result = validate(null, num());
-        //     result.valid.should.be.true();
-        //     should(result.value).be.null();
-        // });
+        it("should pass if null value and no required rule", done => {
+            validate(null, rules.num(false))
+                .then(v => assertBlock(done, () => {
+                    should(v).be.null();
+                }))
+                .catch(() => done("Validation must pass!"));
+        });
 
-        // it("should false if null value and required rule included", () => {
-        //     const result = validate(null, num().required());
-        //     result.valid.should.be.false();
-        //     should(result.value).be.null();
-        // });
+        it("should fail if null value and required rule included", done => {
+            validate(null, rules.num(false).required("REQUIRED"))
+                .then(() => done("Validation must fail"))
+                .catch(err => assertBlock(done, () => {
+                    should(err[""]).deepEqual(["REQUIRED"]);
+                }));
+        });
+
+        it("should fail if conversion disabled and value is not a number", done => {
+            validate("1223", rules.num(false, "NOT A NUMBER"))
+                .then(() => done("Validation must fail"))
+                .catch(err => assertBlock(done, () => {
+                    should(err[""]).deepEqual(["NOT A NUMBER"]);
+                }));
+        });
     });
 
-    // describe("with transform", () => {
-    //     const numbers = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+    describe("for any value", () => {
+        const validator = rules.any<Date>(v => new Date(`${v}`) !== undefined, "Invalid date")
+            .parse(v => new Date(`${v}`));
 
-    //     const transformNumber = num().required().transform(v => numbers[v], "Undefined");
+        it("must validate correct date", done => {
+            validate("2014-11-01", validator)
+                .then(v => assertBlock(done, () => {
 
-    //     it("should transform valid values", () => {
-    //         const result = validate(1, transformNumber);
-    //         result.valid.should.be.true();
-    //         result.value.should.equal("one");
-    //     });
-
-    //     it("should fail on invalid value", () => {
-    //         const result = validate(15, transformNumber);
-    //         result.valid.should.be.false();
-    //         result.errors[""][0].should.equal("Undefined");
-    //     })
-    // });
-
-    // describe("for any project", () => {
-    //     const validator = any(v => new Date(`${v}`) !== undefined, "Invalid date")
-    //         .transform(v => new Date(`${v}`));
-
-    //     it("must validate correct date", () => {
-    //         const result = validate("2014-11-01", validator);
-
-    //         result.valid.should.be.true();
-    //         (<Date>result.value).getTime().should.equal(new Date("2014-11-01").getTime());
-    //     });
-    // })
+                    v.getTime().should.equal(new Date("2014-11-01").getTime());
+                }))
+                .catch(() => done("Must pass!!"));
+        });
+    })
 };
