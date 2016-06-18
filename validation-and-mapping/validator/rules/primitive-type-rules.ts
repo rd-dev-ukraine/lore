@@ -1,72 +1,179 @@
-import { ValidateAndTransformFunc, ReportErrorFunction } from "../definitions";
-import { ChainableRuleRunner } from "./rules-base";
+import { SequentialRuleSet } from "./rules-base";
 
-export class StringRules extends ChainableRuleRunner<string> {
+export class StringRules extends SequentialRuleSet<string> {
 
-    notEmpty(errorMessage: string = "Value can not be empty"): this {
-        return this.withRule(StringRules.notEmtpyRule(errorMessage));
+    protected clone(): StringRules {
+        return new StringRules();
     }
 
-    static isStringRule(errorMessage: string, convert: boolean): ValidateAndTransformFunc<any, string> {
-        return (value: any, reportError: ReportErrorFunction) => {
-            if (value === null || value === undefined) {
-                return value;
-            }
+    /** 
+     * Checks if value has string type. Undefined value is passed as correct. 
+     * This rule is applied automatically, don't add call this method manually.
+     */
+    isString(errorMessage: string = "Value must be a string."): this {
+        if (!errorMessage) {
+            throw new Error("Error message is required.");
+        }
 
-            if (typeof value !== "string" && !convert) {
-                reportError(errorMessage);
+        return this.checkAndConvert(
+            (done, value) => {
+                if (value && typeof value !== "string") {
+                    done(errorMessage);
+                }
+                else {
+                    done
+                }
             }
-
-            return value.toString();
-        };
+        );
     }
 
-    static notEmtpyRule(errorMessage: string): ValidateAndTransformFunc<string, string> {
-        return (value: string, reportError: ReportErrorFunction) => {
-            if (!value || !value.trim()) {
-                reportError(errorMessage);
+    parseString(errorMessage: string = "Value must be a string."): this {
+        return this.parse(v => {
+            if (v === null || v === undefined || isNaN(v)) {
+                return "";
             }
 
-            return value;
-        };
+            return "" + v;
+        }, errorMessage);
+    }
+
+    notEmpty(errorMessage: string = "Value can not be empty."): this {
+        return this.checkAndConvert(
+            (done, parsedValue) => {
+                if (!parsedValue || parsedValue.trim().length === 0) {
+                    done(errorMessage);
+                }
+                else {
+                    done();
+                }
+            });
+    }
+
+    maxLength(maxLength: number, errorMessage: string = "Value is too long."): this {
+        if (maxLength <= 0) {
+            throw new Error("Max length must be greater than zero.");
+        }
+        if (!errorMessage) {
+            throw new Error("Error message is required.");
+        }
+
+        return this.checkAndConvert(
+            (done, value) => {
+                if (value && value.length > maxLength) {
+                    done(errorMessage);
+                }
+                else {
+                    done();
+                }
+            }
+        );
+    }
+
+    minLength(minLength: number, errorMessage: string = "Value is too short."): this {
+        if (minLength <= 0) {
+            throw new Error("Min length must be greater than zero.");
+        }
+        if (!errorMessage) {
+            throw new Error("Error message is required.");
+        }
+
+        return this.checkAndConvert(
+            (done, value) => {
+                if (value && value.length < minLength) {
+                    done(errorMessage);
+                }
+                else {
+                    done();
+                }
+            }
+        );
     }
 }
 
-export class NumberRules extends ChainableRuleRunner<number> {
+export class NumberRules extends SequentialRuleSet<number> {
 
-    static isNumberRule(errorMessage: string): ValidateAndTransformFunc<any, number> {
-        return (value: any, reportError: ReportErrorFunction) => {
-            if (value === null || value === undefined) {
-                return value;
-            }
+    protected clone(): NumberRules {
+        return new NumberRules();
+    }
 
-            if (typeof value !== "number") {
-                const result = parseFloat("" + value);
+    /** 
+     * Checks if value is number. Null or undefined values are passed as correct. 
+     * This rule is applied automatically, don't call it. 
+     */
+    isNumber(errorMessage: string = "Value is not valid number"): this {
+        if (!errorMessage) {
+            throw new Error("Error message is required");
+        }
 
-                if (isNaN(result)) {
-                    reportError(errorMessage);
+        return this.checkAndConvert(
+            (done, value) => {
+                if (value !== null && value !== undefined) {
+                    if (typeof value !== "number") {
+                        done(errorMessage);
+                    }
                 }
+                else {
+                    done();
+                }
+            }
+        );
+    }
 
+    /**
+     * Parses number.
+     */
+    parseNumber(errorMessage: string = "Value is not valid number."): this {
+        if (!errorMessage) {
+            throw new Error("Error message is required");
+        }
+
+        return this.parse(input => {
+            const result = parseFloat(input);
+            if (result === null || result === undefined || isNaN(result)) {
+                return null;
+            }
+            else {
                 return result;
             }
 
-            return value;
-        };
+        }, errorMessage);
+    }
+
+}
+
+export class AnyRules<T> extends SequentialRuleSet<T> {
+    protected clone(): AnyRules<T> {
+        return new AnyRules<T>();
     }
 }
 
-export class AnyRules<T> extends ChainableRuleRunner<T> {
-}
-
 export function str(errorMessage: string = "Value is not a string.", convert: boolean = true): StringRules {
-    return new StringRules().withRule(StringRules.isStringRule(errorMessage, convert));
+    if (!errorMessage) {
+        throw new Error("Error message is required");
+    }
+
+    if (convert) {
+        return new StringRules().parseString();
+    }
+    else {
+        return new StringRules().isString(errorMessage);
+    }
 }
 
-export function num(errorMessage: string = "Value is not a valid number"): NumberRules {
-    return new NumberRules().withRule(NumberRules.isNumberRule(errorMessage));
+export function num(convert: boolean = true, errorMessage: string = "Value is not a valid number"): NumberRules {
+    if (convert) {
+        return new NumberRules().parseNumber(errorMessage);
+    }
+    else {
+        return new NumberRules().isNumber(errorMessage);
+    }
 }
 
 export function any<T>(predicate?: (value: T, entity?: any, rootEntity?: any) => boolean, errorMessage: string = "Value is invalid"): AnyRules<T> {
+    if (!errorMessage) {
+        throw new Error("Error message is required");
+    }
+
     predicate = predicate || (v => true);
     return new AnyRules<T>().must(predicate, errorMessage);
 }

@@ -9,7 +9,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
     private rules: ValidationRule<T>[] = [];
     private stopOnFirstFailureValue = false;
 
-    protected abstract clone(): this;
+    protected abstract clone(): SequentialRuleSet<T>;
 
     /** Runs parsing on all rules. */
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
@@ -77,7 +77,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
             copy.rules = [...this.rules, rule];
         }
 
-        return copy;
+        return <this>copy;
     }
 
     /** 
@@ -85,7 +85,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
      * If parsing function is not provided value is passed to validation function without conversion. 
      */
     checkAndConvert(
-        validationFn: (doneCallback: (errorMessage?: string) => void, parsedValue: any, validatingObject?: any, rootObject?: any) => void,
+        validationFn: (doneCallback: (errorMessage?: string) => void, parsedValue: T, validatingObject?: any, rootObject?: any) => void,
         parseFn?: (inputValue: any, validatingObject?: any, rootObject?: any) => T,
         putRuleFirst: boolean = false) {
 
@@ -190,7 +190,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
                 done(errorMessage);
             }
             else {
-                done(input);
+                done();
             }
         })
     }
