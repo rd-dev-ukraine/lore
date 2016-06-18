@@ -13,7 +13,7 @@ exports.default = function () {
                 .catch(function (err) { return done(err); });
         });
         it("should error if value is not string and conversion disabled", function (done) {
-            validator_1.validateWithPromise(213, validator_1.rules.str("Value is not string", false))
+            validator_1.validateWithPromise(213, validator_1.rules.str(false, "Value is not string"))
                 .then(function (v) {
                 done("Validation must fail");
             })
@@ -39,22 +39,22 @@ exports.default = function () {
                 errors[""][0].should.be.equal("Empty string is invalid!");
             }); });
         });
-        // it("should run chained validators successfuly", () => {
-        //     const result = validate("23234", str().notEmpty());
-        //     result.valid.should.be.true();
-        //     result.value.should.equal("23234");
-        //     should(result.errors).be.undefined();
-        // });
-        // it("should pass if null string and no required rule", () => {
-        //     const result = validate(null, str());
-        //     result.valid.should.be.true();
-        //     should(result.value).be.null();
-        // });
-        // it("should false if null string and required rule included", () => {
-        //     const result = validate(null, str().required());
-        //     result.valid.should.be.false();
-        //     should(result.value).be.null();
-        // });
+        it("should pass if null string and no required rule", function (done) {
+            validator_1.validateWithPromise(null, validator_1.rules.str(false))
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                should(v).be.null();
+            }); })
+                .catch(function (err) {
+                done("Validation should not fail.");
+            });
+        });
+        it("should fail if null string and required rule included", function (done) {
+            validator_1.validateWithPromise(null, validator_1.rules.str().required("NULL!!"))
+                .then(function () { return done("Validation must fail."); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                should(err[""]).deepEqual(["NULL!!"]);
+            }); });
+        });
     });
     // describe("for number", () => {
     //     it("should validate if value is number", () => {

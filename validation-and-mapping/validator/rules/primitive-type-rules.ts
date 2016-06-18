@@ -142,8 +142,8 @@ export class NumberRules extends SequentialRuleSet<number> {
 }
 
 
-export function str(errorMessage: string = "Value is not a string.", convert: boolean = true): StringRules {
-    if (!errorMessage) {
+export function str(convert: boolean = true, errorMessage: string = "Value is not a string."): StringRules {
+    if (!convert && !errorMessage) {
         throw new Error("Error message is required");
     }
 

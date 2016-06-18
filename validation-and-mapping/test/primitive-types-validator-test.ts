@@ -14,7 +14,7 @@ export default () => {
         });
 
         it("should error if value is not string and conversion disabled", done => {
-            validate(213, rules.str("Value is not string", false))
+            validate(213, rules.str(false, "Value is not string"))
                 .then(v => {
                     done("Validation must fail");
                 })
@@ -43,24 +43,23 @@ export default () => {
                 }));
         });
 
-        // it("should run chained validators successfuly", () => {
-        //     const result = validate("23234", str().notEmpty());
-        //     result.valid.should.be.true();
-        //     result.value.should.equal("23234");
-        //     should(result.errors).be.undefined();
-        // });
+        it("should pass if null string and no required rule", done => {
+            validate(null, rules.str(false))
+                .then(v => assertBlock(done, () => {
+                    should(v).be.null();
+                }))
+                .catch(err => {
+                    done("Validation should not fail.");
+                });
+        });
 
-        // it("should pass if null string and no required rule", () => {
-        //     const result = validate(null, str());
-        //     result.valid.should.be.true();
-        //     should(result.value).be.null();
-        // });
-
-        // it("should false if null string and required rule included", () => {
-        //     const result = validate(null, str().required());
-        //     result.valid.should.be.false();
-        //     should(result.value).be.null();
-        // });
+        it("should fail if null string and required rule included", done => {
+            validate(null, rules.str().required("NULL!!"))
+                .then(() => done("Validation must fail."))
+                .catch(err => assertBlock(done, () => {
+                    should(err[""]).deepEqual(["NULL!!"]);
+                }));
+        });
     });
 
     // describe("for number", () => {

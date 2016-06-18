@@ -137,10 +137,10 @@ var NumberRules = (function (_super) {
     return NumberRules;
 }(rules_base_1.SequentialRuleSet));
 exports.NumberRules = NumberRules;
-function str(errorMessage, convert) {
-    if (errorMessage === void 0) { errorMessage = "Value is not a string."; }
+function str(convert, errorMessage) {
     if (convert === void 0) { convert = true; }
-    if (!errorMessage) {
+    if (errorMessage === void 0) { errorMessage = "Value is not a string."; }
+    if (!convert && !errorMessage) {
         throw new Error("Error message is required");
     }
     if (convert) {
