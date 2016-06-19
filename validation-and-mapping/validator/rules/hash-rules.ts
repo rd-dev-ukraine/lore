@@ -107,12 +107,10 @@ export class HashValidationRule<TElement> extends EnclosingValidationRuleBase<IH
      * Don't fail on invalid element. Instead don't include invalid elements in result hash.
      * Note new rule never fails instead return empty hash.
      */
-    skipInvalidElements(): this {
-        return <this>new HashValidationRule<TElement>(
-            this.elementValidationRule,
-            true,
-            this.filterHashFn,
-            this.stopOnMainRuleFailure);
+    skipInvalidElements(skipInvalidElements = true): this {
+        this.skipInvalidElementsProp = skipInvalidElements;
+
+        return this.makeCopy();
     }
 
     /** Filter result hash by applying predicate to each hash item and include only items passed the test. */
@@ -121,11 +119,18 @@ export class HashValidationRule<TElement> extends EnclosingValidationRuleBase<IH
             throw new Error("Predicate is required.");
         }
 
-        return <this>new HashValidationRule<TElement>(
-            this.elementValidationRule,
-            this.skipInvalidElementsProp,
-            predicate,
-            this.stopOnMainRuleFailure);
+        this.filterHashFn = predicate;
+
+        return this.makeCopy();
+    }
+
+    private makeCopy(): this {
+        return this.withMainRule(
+            new HashValidationRule<TElement>(
+                this.elementValidationRule,
+                this.skipInvalidElementsProp,
+                this.filterHashFn,
+                this.stopOnMainRuleFailure));
     }
 }
 

@@ -85,14 +85,19 @@ var ArrayValidationRule = (function (_super) {
      */
     ArrayValidationRule.prototype.skipInvalidElements = function (skipInvalidElements) {
         if (skipInvalidElements === void 0) { skipInvalidElements = true; }
-        return this.withMainRule(new ArrayValidationRule(this.elementValidationRule, skipInvalidElements, this.filterElementFn, this.stopOnMainRuleFailure));
+        this.skipInvalidElementsProp = skipInvalidElements;
+        return this.makeCopy();
     };
     /** Filter result array by applying predicate to each hash item and include only items passed the test. */
     ArrayValidationRule.prototype.filter = function (predicate) {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        return this.withMainRule(new ArrayValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, predicate, this.stopOnMainRuleFailure));
+        this.filterElementFn = predicate;
+        return this.makeCopy();
+    };
+    ArrayValidationRule.prototype.makeCopy = function () {
+        return this.withMainRule(new ArrayValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, this.filterElementFn, this.stopOnMainRuleFailure));
     };
     return ArrayValidationRule;
 }(rules_base_1.EnclosingValidationRuleBase));

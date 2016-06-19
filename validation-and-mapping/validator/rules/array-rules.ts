@@ -113,11 +113,9 @@ export class ArrayValidationRule<TElement> extends EnclosingValidationRuleBase<T
      * Note new rule never fails instead it returns empty array.
      */
     skipInvalidElements(skipInvalidElements = true): this {
-        return this.withMainRule(new ArrayValidationRule<TElement>(
-            this.elementValidationRule,
-            skipInvalidElements,
-            this.filterElementFn,
-            this.stopOnMainRuleFailure));
+        this.skipInvalidElementsProp = skipInvalidElements;
+
+        return this.makeCopy();
     }
 
     /** Filter result array by applying predicate to each hash item and include only items passed the test. */
@@ -126,10 +124,15 @@ export class ArrayValidationRule<TElement> extends EnclosingValidationRuleBase<T
             throw new Error("Predicate is required.");
         }
 
+        this.filterElementFn = predicate;
+        return this.makeCopy();
+    }
+
+    private makeCopy(): this {
         return this.withMainRule(new ArrayValidationRule<TElement>(
             this.elementValidationRule,
             this.skipInvalidElementsProp,
-            predicate,
+            this.filterElementFn,
             this.stopOnMainRuleFailure));
     }
 }

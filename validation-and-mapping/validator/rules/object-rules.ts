@@ -110,7 +110,17 @@ export class ObjectValidationRule<T extends IObject> extends EnclosingValidation
     }
 
     expandable(): this {
-        return <this>new ObjectValidationRule<T>(this.properties, true, this.stopsOnMainRuleFailure);
+        this.isExpandable = true;
+
+        return this.makeCopy();
+    }
+
+    private makeCopy(): this {
+        return this.withMainRule(
+            new ObjectValidationRule<T>(
+                this.properties,
+                this.isExpandable,
+                this.stopsOnMainRuleFailure));
     }
 }
 

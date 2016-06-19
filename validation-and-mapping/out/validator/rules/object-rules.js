@@ -78,7 +78,11 @@ var ObjectValidationRule = (function (_super) {
         return new ObjectValidationRule(this.properties, this.isExpandable, this.stopsOnMainRuleFailure);
     };
     ObjectValidationRule.prototype.expandable = function () {
-        return new ObjectValidationRule(this.properties, true, this.stopsOnMainRuleFailure);
+        this.isExpandable = true;
+        return this.makeCopy();
+    };
+    ObjectValidationRule.prototype.makeCopy = function () {
+        return this.withMainRule(new ObjectValidationRule(this.properties, this.isExpandable, this.stopsOnMainRuleFailure));
     };
     return ObjectValidationRule;
 }(rules_base_1.EnclosingValidationRuleBase));

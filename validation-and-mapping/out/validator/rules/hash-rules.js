@@ -78,15 +78,21 @@ var HashValidationRule = (function (_super) {
      * Don't fail on invalid element. Instead don't include invalid elements in result hash.
      * Note new rule never fails instead return empty hash.
      */
-    HashValidationRule.prototype.skipInvalidElements = function () {
-        return new HashValidationRule(this.elementValidationRule, true, this.filterHashFn, this.stopOnMainRuleFailure);
+    HashValidationRule.prototype.skipInvalidElements = function (skipInvalidElements) {
+        if (skipInvalidElements === void 0) { skipInvalidElements = true; }
+        this.skipInvalidElementsProp = skipInvalidElements;
+        return this.makeCopy();
     };
     /** Filter result hash by applying predicate to each hash item and include only items passed the test. */
     HashValidationRule.prototype.filter = function (predicate) {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        return new HashValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, predicate, this.stopOnMainRuleFailure);
+        this.filterHashFn = predicate;
+        return this.makeCopy();
+    };
+    HashValidationRule.prototype.makeCopy = function () {
+        return this.withMainRule(new HashValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, this.filterHashFn, this.stopOnMainRuleFailure));
     };
     return HashValidationRule;
 }(rules_base_1.EnclosingValidationRuleBase));
