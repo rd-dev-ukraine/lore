@@ -57,6 +57,23 @@ exports.default = function () {
             id: validator_1.rules.num().required(),
             title: validator_1.rules.str().required()
         }));
+        it("must not fail on null value if required is not specified", function (done) {
+            validator_1.validateWithPromise(null, objectHash)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                should(v).be.null();
+            }); })
+                .catch(function (err) { return done("Must pass but failed with error" + JSON.stringify(err)); });
+        });
+        it("must fail on null value if required is specified", function (done) {
+            var objHashRequiredRule = objectHash.required({ errorMessage: "NULL!!" });
+            validator_1.validateWithPromise(null, objHashRequiredRule)
+                .then(function (v) { return done("Must fail but passed with value " + JSON.stringify(v)); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    "": ["NULL!!"]
+                });
+            }); });
+        });
         it("must pass on valid hash", function (done) {
             var validHash = {
                 "1": {

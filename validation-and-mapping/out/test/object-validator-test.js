@@ -11,6 +11,23 @@ exports.default = function () {
             description: validator_1.rules.str(),
             price: validator_1.rules.num().required().must(function (p) { return p > 0; }, { errorMessage: "Positive!!!" })
         });
+        it("must not fail on null value if required is not specified", function (done) {
+            validator_1.validateWithPromise(null, objectStructure)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                should(v).be.null();
+            }); })
+                .catch(function (err) { return done("Must pass but failed with error" + JSON.stringify(err)); });
+        });
+        it("must fail on null value if required is specified", function (done) {
+            var objRequiredRule = objectStructure.required({ errorMessage: "NULL!!" });
+            validator_1.validateWithPromise(null, objRequiredRule)
+                .then(function (v) { return done("Must fail but passed with value " + JSON.stringify(v)); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    "": ["NULL!!"]
+                });
+            }); });
+        });
         it("should pass validation for correct structure", function (done) {
             var test = {
                 id: "2342340",

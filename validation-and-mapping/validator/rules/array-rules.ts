@@ -30,6 +30,11 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
         validatingObject?: any,
         rootObject?: any): void {
 
+        if (array === null || array === undefined) {
+            doneCallback(true);
+            return;
+        }
+
         let srcIndex = 0;
         let srcLength = array.length;
         let index = 0;

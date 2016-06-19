@@ -9,4 +9,4 @@ describe("Object validator", object_validator_test_1.default);
 describe("Rule sequence", rule_sequence_test_1.default);
 describe("Hash validator", hash_validator_test_1.default);
 describe("Array validator", array_validator_test_1.default);
-//# sourceMappingURL=tests.js.map
+//# sourceMappingURL=index.js.map

@@ -12,6 +12,27 @@ export default () => {
             price: rules.num().required().must(p => p > 0, { errorMessage: "Positive!!!" })
         });
 
+        it("must not fail on null value if required is not specified", done => {
+            validate(null, objectStructure)
+                .then(v => assertBlock(done, () => {
+                    should(v).be.null();
+                }))
+                .catch(err => done("Must pass but failed with error" + JSON.stringify(err)));
+
+        });
+
+        it("must fail on null value if required is specified", done => {
+            const objRequiredRule = objectStructure.required({ errorMessage: "NULL!!" });
+            validate(null, objRequiredRule)
+                .then(v => done("Must fail but passed with value " + JSON.stringify(v)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "": ["NULL!!"]
+                    });
+                }));
+
+        });
+
         it("should pass validation for correct structure", done => {
             const test = {
                 id: "2342340",

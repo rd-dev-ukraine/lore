@@ -10,6 +10,27 @@ export default () => {
             rules.num().required().must(v => v > 0 && v < 10)
         );
 
+        it("must not fail on null value if required is not specified", done => {
+            validate(null, numberArrayValidator)
+                .then(v => assertBlock(done, () => {
+                    should(v).be.null();
+                }))
+                .catch(err => done("Must pass but failed with error" + JSON.stringify(err)));
+
+        });
+
+        it("must fail on null value if required is specified", done => {
+            const arrayRequiredRule = numberArrayValidator.required({ errorMessage: "NULL!!" });
+            validate(null, arrayRequiredRule)
+                .then(v => done("Must fail but passed with value " + JSON.stringify(v)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "": ["NULL!!"]
+                    });
+                }));
+
+        });
+
         it("should pass for valid array", done => {
             const validArray = [1, 2, 4];
 
@@ -64,34 +85,6 @@ export default () => {
                 }));
         });
 
-        it("should correctly build path on failed element validator", done => {
-            const rule = rules.arr(
-                rules.obj({
-                    id: rules.num().required().must(v => v < 10, { errorMessage: "Too large" }),
-                    title: rules.str()
-                })
-            );
-
-            validate(
-                [
-                    {
-                        id: 1,
-                        title: "one"
-                    },
-                    {
-                        id: 10,
-                        title: "ten"
-                    }
-                ],
-                rule)
-                .then(r => done("Must fail but passed with result " + JSON.stringify(r)))
-                .catch(err => assertBlock(done, () => {
-                    err.should.deepEqual({
-                        "[1].id": ["Too large"]
-                    })
-                }));
-        });
-
         it("should run before rules on non-filtered array", done => {
             const rule = rules.arr(
                 rules.num().required()
@@ -128,6 +121,130 @@ export default () => {
                     r.should.deepEqual([1, 3]);
                 }))
                 .catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
+
+        it("should not fail on null value if required is not specified", done => {
+            const rule = rules.arr(rules.num().required());
+
+            validate(null, rule)
+                .then(v => assertBlock(done, () => {
+                    should(v).be.null();
+                }))
+                .catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
+    });
+
+    describe("for object array", () => {
+        it("should correctly build path on failed element validator", done => {
+            const rule = rules.arr(
+                rules.obj({
+                    id: rules.num().required().must(v => v < 10, { errorMessage: "Too large" }),
+                    title: rules.str()
+                })
+            );
+
+            validate(
+                [
+                    {
+                        id: 1,
+                        title: "one"
+                    },
+                    {
+                        id: 10,
+                        title: "ten"
+                    }
+                ],
+                rule)
+                .then(r => done("Must fail but passed with result " + JSON.stringify(r)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "[1].id": ["Too large"]
+                    })
+                }));
+        });
+
+        it("should build correct indexes for nested arrays", done => {
+            const rule = rules.arr(
+                rules.arr(
+                    rules.num().must(n => n < 10, { errorMessage: "Too large" })
+                )
+            );
+
+            validate([
+                [0, 1, 2],
+                [0, 20],
+                [22, 3, 10]
+            ],
+                rule).then(r => done("Must fail but passed with result " + JSON.stringify(r)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "[1][1]": ["Too large"],
+                        "[2][0]": ["Too large"],
+                        "[2][2]": ["Too large"]
+                    });
+                }));
+        });
+
+        it("should build correct indexes for arrays nested in obj", done => {
+            const rule = rules.arr(
+                rules.arr(
+                    rules.num().must(n => n < 10, { errorMessage: "Too large" })
+                )
+            );
+
+            validate([
+                [0, 1, 2],
+                [0, 20],
+                [22, 3, 10]
+            ],
+                rule).then(r => done("Must fail but passed with result " + JSON.stringify(r)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "[1][1]": ["Too large"],
+                        "[2][0]": ["Too large"],
+                        "[2][2]": ["Too large"]
+                    });
+                }));
+        });
+
+        describe("should build correct path for nested structure", () => {
+            const rule = rules.arr(
+                rules.obj({
+                    id: rules.num().required({ errorMessage: "ID is required" }),
+                    data: rules.arr(
+                        rules.str().notEmpty({ errorMessage: "Data item is required" })
+                    ).required({ errorMessage: "Data is required" })
+                        .after(arr => arr.length < 3, { errorMessage: "Too many data" })
+                })
+            );
+
+            it("if error in most nest level", done => {
+                validate([
+                    {
+                        id: 0,
+                        data: ["1", "2"]
+                    },
+                    {
+                        id: 1
+                    },
+                    {
+                        id: 2,
+                        data: ["3", null]
+                    },
+                    {
+                        data: ["1", "2", "4", "3"]
+                    }], rule)
+                    .then(r => done("Must fail but passed with result " + JSON.stringify(r)))
+                    .catch(err => assertBlock(done, () => {
+                        err.should.deepEqual({
+                            "[1].data": ["Data is required"],
+                            "[2].data[1]": ["Data item is required"],
+                            "[3].id": ["ID is required"],
+                            "[3].data": ["Too many data"]
+                        });
+                    }));
+            });
+
         });
     });
 };

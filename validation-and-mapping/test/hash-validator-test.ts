@@ -75,6 +75,27 @@ export default () => {
             })
         );
 
+        it("must not fail on null value if required is not specified", done => {
+            validate(null, objectHash)
+                .then(v => assertBlock(done, () => {
+                    should(v).be.null();
+                }))
+                .catch(err => done("Must pass but failed with error" + JSON.stringify(err)));
+
+        });
+
+        it("must fail on null value if required is specified", done => {
+            const objHashRequiredRule = objectHash.required({ errorMessage: "NULL!!" });
+            validate(null, objHashRequiredRule)
+                .then(v => done("Must fail but passed with value " + JSON.stringify(v)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "": ["NULL!!"]
+                    });
+                }));
+
+        });
+
         it("must pass on valid hash", done => {
             const validHash = {
                 "1": {
@@ -223,8 +244,8 @@ export default () => {
 
         it("must run after rule on hash with skipped invalid elements", done => {
             const hashRuleWithAfter = hashRule.stopOnFail(false)
-                                              .skipInvalidElements()
-                                              .after((h: any) => !h["second"], { errorMessage: "second is not skipped as error" });
+                .skipInvalidElements()
+                .after((h: any) => !h["second"], { errorMessage: "second is not skipped as error" });
 
             validate(
                 {

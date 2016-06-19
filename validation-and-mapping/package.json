@@ -4,7 +4,7 @@
   "description": "Validation and conversion tool for javascript",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./out/test/tests.js"
+    "test": "mocha ./out/test/index.js"
   },
   "author": "Sergey Tokarev",
   "license": "MIT",
