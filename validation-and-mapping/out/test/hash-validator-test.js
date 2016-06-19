@@ -52,28 +52,158 @@ exports.default = function () {
                 .catch(function () { return done("Must pass!"); });
         });
     });
-    // describe("for objects hash", () => {
-    //     const objectHash = hash(
-    //         obj({
-    //             id: num().required(),
-    //             title: str().required()
-    //         })
-    //     );
-    //     it("must pass on valid hash", () => {
-    //         const validHash = {
-    //             "1": {
-    //                 id: 1,
-    //                 title: "one"
-    //             },
-    //             "2": {
-    //                 id: 2,
-    //                 title: "two"
-    //             }
-    //         };
-    //         const result = validate<any, any>(validHash, objectHash);
-    //         result.valid.should.be.true();
-    //         result.value.should.deepEqual(validHash);
-    //     });
-    // });
+    describe("for objects hash", function () {
+        var objectHash = validator_1.rules.hash(validator_1.rules.obj({
+            id: validator_1.rules.num().required(),
+            title: validator_1.rules.str().required()
+        }));
+        it("must pass on valid hash", function (done) {
+            var validHash = {
+                "1": {
+                    id: 1,
+                    title: "one"
+                },
+                "2": {
+                    id: 2,
+                    title: "two"
+                }
+            };
+            validator_1.validateWithPromise(validHash, objectHash)
+                .then(function (r) { return utils_1.assertBlock(done, function () {
+                r.should.deepEqual(validHash);
+            }); })
+                .catch(function () { return done("Must pass"); });
+        });
+        it("must fail on element error", function (done) {
+            var invalidHash = {
+                "one": {
+                    id: 1,
+                    title: "one"
+                },
+                "two": {
+                    id: "two",
+                    title: "two"
+                }
+            };
+            validator_1.validateWithPromise(invalidHash, objectHash)
+                .then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    "two.id": ["Value is not a valid number."]
+                });
+            }); });
+        });
+        it("must skip invalid elements on inner element error", function (done) {
+            var objectHashWithSkip = objectHash.skipInvalidElements();
+            var invalidHash = {
+                "one": {
+                    id: 1,
+                    title: "one"
+                },
+                "two": {
+                    id: "two",
+                    title: "two"
+                }
+            };
+            validator_1.validateWithPromise(invalidHash, objectHashWithSkip)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.deepEqual({
+                    "one": {
+                        id: 1,
+                        title: "one"
+                    }
+                });
+            }); })
+                .catch(function (err) { return done("Must pass but failed with error " + JSON.stringify(err)); });
+        });
+    });
+    describe("for hash validator with filtering", function () {
+        var elementRule = validator_1.rules.obj({
+            id: validator_1.rules.num().required().must(function (v) { return v > 10; }, { errorMessage: "Too small" }),
+            title: validator_1.rules.str().required()
+        });
+        var hashRule = validator_1.rules.hash(elementRule).filter(function (key) { return key.indexOf("i_") !== 0; });
+        it("must filter out elements", function (done) {
+            validator_1.validateWithPromise({
+                "one": {
+                    id: 20,
+                    title: "twenty"
+                },
+                "i_one": {
+                    id: 1,
+                    title: "one"
+                }
+            }, hashRule)
+                .then(function (v) { return utils_1.assertBlock(done, function () {
+                v.should.deepEqual({
+                    "one": {
+                        id: 20,
+                        title: "twenty"
+                    }
+                });
+            }); })
+                .catch(function () { return done("Must pass"); });
+        });
+        it("must fail on non-filtered elements", function (done) {
+            validator_1.validateWithPromise({
+                "one": {
+                    id: 2,
+                    title: "twenty"
+                },
+                "i_one": {
+                    id: 1,
+                    title: "one"
+                }
+            }, hashRule)
+                .then(function () { return done("Must fail"); })
+                .catch(function (err) { return utils_1.assertBlock(done, function () {
+                err.should.deepEqual({
+                    "one.id": ["Too small"]
+                });
+            }); });
+        });
+        it("must run before rule on filtered hash", function (done) {
+            var hashRuleWithBefore = hashRule.before(function (h) { return !h["i_one"]; }, { errorMessage: "i_one is not filtered out" });
+            validator_1.validateWithPromise({
+                "first": {
+                    id: 20,
+                    title: "twenty"
+                },
+                "i_one": {
+                    id: 1,
+                    title: "one"
+                }
+            }, hashRuleWithBefore).then(function (r) { return utils_1.assertBlock(done, function () {
+                r.should.deepEqual({
+                    "first": {
+                        id: 20,
+                        title: "twenty"
+                    }
+                });
+            }); }).catch(function (err) { return done("Must pass but failed with error " + JSON.stringify(err)); });
+        });
+        it("must run after rule on hash with skipped invalid elements", function (done) {
+            var hashRuleWithAfter = hashRule.stopOnFail(false)
+                .skipInvalidElements()
+                .after(function (h) { return !h["second"]; }, { errorMessage: "second is not skipped as error" });
+            validator_1.validateWithPromise({
+                "first": {
+                    id: 20,
+                    title: "twenty"
+                },
+                "second": {
+                    id: 1,
+                    title: "one"
+                }
+            }, hashRuleWithAfter).then(function (r) { return utils_1.assertBlock(done, function () {
+                r.should.deepEqual({
+                    "first": {
+                        id: 20,
+                        title: "twenty"
+                    }
+                });
+            }); }).catch(function (err) { return done("Must pass but failed with error " + JSON.stringify(err)); });
+        });
+    });
 };
 //# sourceMappingURL=hash-validator-test.js.map

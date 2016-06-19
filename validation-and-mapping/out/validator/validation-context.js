@@ -28,7 +28,8 @@ var ValidationContext = (function () {
         if (this.path) {
             fullPath = path[0] === "[" ? this.path + path : this.path + "." + path;
         }
-        return new ValidationContext(fullPath, this.errorAccumulator, errorCallback);
+        var result = new ValidationContext(fullPath, this.errorBuffer || this.errorAccumulator, errorCallback);
+        return result;
     };
     ValidationContext.prototype.bufferErrors = function () {
         var result = new ValidationContext(this.path, this.errorAccumulator, this.errorCallback);

@@ -37,11 +37,13 @@ export default class ValidationContext implements IValidationContext {
             fullPath = path[0] === "[" ? this.path + path : this.path + "." + path;
         }
 
-        return new ValidationContext(
+        const result = new ValidationContext(
             fullPath,
-            this.errorAccumulator,
+            this.errorBuffer || this.errorAccumulator,
             errorCallback
         );
+
+        return result;
     }
 
     bufferErrors() {

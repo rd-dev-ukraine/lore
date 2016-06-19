@@ -46,7 +46,7 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
         const hashKeys: string[] = [];
         for (let key in hash) {
             hashKeys.push(key);
-        }        
+        }
 
         let valid = true;
         const run = () => {

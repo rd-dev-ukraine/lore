@@ -67,31 +67,185 @@ export default () => {
         });
     });
 
-    // describe("for objects hash", () => {
-    //     const objectHash = hash(
-    //         obj({
-    //             id: num().required(),
-    //             title: str().required()
-    //         })
-    //     );
+    describe("for objects hash", () => {
+        const objectHash = rules.hash(
+            rules.obj({
+                id: rules.num().required(),
+                title: rules.str().required()
+            })
+        );
 
-    //     it("must pass on valid hash", () => {
-    //         const validHash = {
-    //             "1": {
-    //                 id: 1,
-    //                 title: "one"
-    //             },
-    //             "2": {
-    //                 id: 2,
-    //                 title: "two"
-    //             }
-    //         };
+        it("must pass on valid hash", done => {
+            const validHash = {
+                "1": {
+                    id: 1,
+                    title: "one"
+                },
+                "2": {
+                    id: 2,
+                    title: "two"
+                }
+            };
 
-    //         const result = validate<any, any>(validHash, objectHash);
+            validate(validHash, objectHash)
+                .then(r => assertBlock(done, () => {
+                    r.should.deepEqual(validHash);
+                }))
+                .catch(() => done("Must pass"));
+        });
 
-    //         result.valid.should.be.true();
-    //         result.value.should.deepEqual(validHash);
-    //     });
+        it("must fail on element error", done => {
+            const invalidHash = {
+                "one": {
+                    id: 1,
+                    title: "one"
+                },
+                "two": {
+                    id: "two",
+                    title: "two"
+                }
+            };
 
-    // });
+            validate(invalidHash, objectHash)
+                .then(() => done("Must fail"))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "two.id": ["Value is not a valid number."]
+                    });
+                }));
+        });
+
+        it("must skip invalid elements on inner element error", done => {
+            const objectHashWithSkip = objectHash.skipInvalidElements();
+
+            const invalidHash = {
+                "one": {
+                    id: 1,
+                    title: "one"
+                },
+                "two": {
+                    id: "two",
+                    title: "two"
+                }
+            };
+
+            validate(invalidHash, objectHashWithSkip)
+                .then(v => assertBlock(done, () => {
+                    v.should.deepEqual({
+                        "one": {
+                            id: 1,
+                            title: "one"
+                        }
+                    });
+                }))
+                .catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
+    });
+
+    describe("for hash validator with filtering", () => {
+        const elementRule = rules.obj({
+            id: rules.num().required().must(v => v > 10, { errorMessage: "Too small" }),
+            title: rules.str().required()
+        });
+
+        const hashRule = rules.hash(elementRule).filter(key => key.indexOf("i_") !== 0);
+
+        it("must filter out elements", done => {
+
+            validate(
+                {
+                    "one": {
+                        id: 20,
+                        title: "twenty"
+                    },
+                    "i_one": {
+                        id: 1,
+                        title: "one"
+                    }
+                },
+                hashRule)
+                .then(v => assertBlock(done, () => {
+                    v.should.deepEqual({
+                        "one": {
+                            id: 20,
+                            title: "twenty"
+                        }
+                    });
+                }))
+                .catch(() => done("Must pass"));
+        });
+
+        it("must fail on non-filtered elements", done => {
+
+            validate(
+                {
+                    "one": {
+                        id: 2,
+                        title: "twenty"
+                    },
+                    "i_one": {
+                        id: 1,
+                        title: "one"
+                    }
+                },
+                hashRule)
+                .then(() => done("Must fail"))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "one.id": ["Too small"]
+                    });
+                }));
+        });
+
+        it("must run before rule on filtered hash", done => {
+            const hashRuleWithBefore = hashRule.before((h: any) => !h["i_one"], { errorMessage: "i_one is not filtered out" });
+
+            validate(
+                {
+                    "first": {
+                        id: 20,
+                        title: "twenty"
+                    },
+                    "i_one": {
+                        id: 1,
+                        title: "one"
+                    }
+                },
+                hashRuleWithBefore).then(r => assertBlock(done, () => {
+                    r.should.deepEqual({
+                        "first": {
+                            id: 20,
+                            title: "twenty"
+                        }
+                    })
+                })).catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
+
+        it("must run after rule on hash with skipped invalid elements", done => {
+            const hashRuleWithAfter = hashRule.stopOnFail(false)
+                                              .skipInvalidElements()
+                                              .after((h: any) => !h["second"], { errorMessage: "second is not skipped as error" });
+
+            validate(
+                {
+                    "first": {
+                        id: 20,
+                        title: "twenty"
+                    },
+                    "second": {
+                        id: 1,
+                        title: "one"
+                    }
+                },
+                hashRuleWithAfter).then(r => assertBlock(done, () => {
+                    r.should.deepEqual({
+                        "first": {
+                            id: 20,
+                            title: "twenty"
+                        }
+                    })
+                })).catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        })
+
+    });
 };
