@@ -112,7 +112,7 @@ var NumberRules = (function (_super) {
             stopOnFailure: true
         });
         return this.checkAndConvert(function (done, value) {
-            if (value === null || value === undefined) {
+            if (value === null || value === undefined || value === "") {
                 done();
                 return;
             }
@@ -140,7 +140,7 @@ var NumberRules = (function (_super) {
                 done();
             }
         }, function (inputValue, validatingObject, rootObject) {
-            if (inputValue === null || inputValue === undefined) {
+            if (inputValue === null || inputValue === undefined || inputValue === "") {
                 return inputValue;
             }
             var converted = parseFloat(inputValue);

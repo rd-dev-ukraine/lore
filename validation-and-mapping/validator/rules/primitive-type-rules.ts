@@ -135,7 +135,7 @@ export class NumberRules extends SequentialRuleSet<number> {
 
         return this.checkAndConvert(
             (done, value) => {
-                if (value === null || value === undefined) {
+                if (value === null || value === undefined || <any>value === "") {
                     done();
                     return;
                 }
@@ -173,7 +173,7 @@ export class NumberRules extends SequentialRuleSet<number> {
                 }
             },
             (inputValue, validatingObject, rootObject) => {
-                if (inputValue === null || inputValue === undefined) {
+                if (inputValue === null || inputValue === undefined || inputValue === "") {
                     return inputValue;
                 }
 
