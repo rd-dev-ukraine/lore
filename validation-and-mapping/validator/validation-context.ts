@@ -3,6 +3,8 @@ import { IValidationContext } from "./definitions";
 import ErrorAccumulator from "./error-accumulator";
 
 export default class ValidationContext implements IValidationContext {
+    private errorBuffer: ErrorAccumulator = null;
+
     constructor(
         public path: string,
         private errorAccumulator: ErrorAccumulator,
@@ -14,8 +16,7 @@ export default class ValidationContext implements IValidationContext {
             return;
         }
 
-        this.errorAccumulator
-            .report(this.path, message);
+        (this.errorBuffer || this.errorAccumulator).report(this.path, message);
     }
 
     property(propertyName: string, errorCallback?: (errorMessage: string) => boolean): ValidationContext {
@@ -41,5 +42,25 @@ export default class ValidationContext implements IValidationContext {
             this.errorAccumulator,
             errorCallback
         );
+    }
+
+    bufferErrors() {
+        const result = new ValidationContext(this.path, this.errorAccumulator, this.errorCallback);
+        result.errorBuffer = new ErrorAccumulator();
+
+        return result;
+    }
+
+    flushErrors() {
+        if (this.errorBuffer) {
+            const errors = this.errorBuffer.errors();
+            Object.keys(errors)
+                .forEach(path => {
+                    const messages = errors[path];
+                    messages.forEach(message => this.errorAccumulator.report(path, message));
+                });
+        }
+
+        this.errorBuffer = null;
     }
 }

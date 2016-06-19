@@ -22,6 +22,7 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
         if (hash === null || hash === undefined) {
             return hash;
         }
+
         const result: IHash<TElement> = {};
 
         for (let key in hash) {
@@ -44,8 +45,8 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
 
         const hashKeys: string[] = [];
         for (let key in hash) {
-            hashKeys.push(hash);
-        }
+            hashKeys.push(key);
+        }        
 
         let valid = true;
         const run = () => {
@@ -53,7 +54,7 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
                 const key = hashKeys.shift();
                 const inputValue = hash[key];
 
-                const keyContext = context.property(key);
+                const keyContext = context.property(`${key}`).bufferErrors();
 
                 this.elementValidationRule.runValidate(
                     keyContext,
@@ -65,6 +66,7 @@ class HashValidationRuleCore<TElement> implements ValidationRule<IHash<TElement>
                         }
                         else {
                             valid = valid && success;
+                            keyContext.flushErrors();
                         }
 
                         run();

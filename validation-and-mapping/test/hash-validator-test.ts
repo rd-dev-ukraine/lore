@@ -1,86 +1,97 @@
 import * as should from "should";
 
-// import { validate, obj, objOptional, str, num, hash, hashOptional } from "../validator";
+import {assertBlock } from "./utils";
+import { validateWithPromise as validate, rules } from "../validator";
 
-// export default () => {
-//     describe("for numbers hash", () => {
-//         const numbersHash = hash(
-//             num().required().must(n => n > 0 && n < 10)
-//         );
 
-//         it("must pass valid numbers", () => {
-//             const validHash = {
-//                 one: 1,
-//                 two: 2,
-//                 three: 3,
-//                 four: 4
-//             };
+export default () => {
 
-//             const result = validate(validHash, numbersHash);
+    describe("for numbers hash", () => {
+        const numbersHash = rules.hash(
+            rules.num().required().must(n => n > 0 && n < 10)
+        );
 
-//             result.valid.should.be.true();
-//             result.value.should.deepEqual(validHash);
-//         });
+        it("must pass valid numbers", done => {
+            const validHash = {
+                one: 1,
+                two: 2,
+                three: 3,
+                four: 4
+            };
 
-//         it("must fail on invalid numbers", () => {
-//             const invalidHash = {
-//                 one: 1,
-//                 two: 2,
-//                 three: "three"
-//             };
+            validate(validHash, numbersHash)
+                .then(v => assertBlock(done, () => {
+                    should(v).deepEqual(validHash);
+                }))
+                .catch(err => {
+                    done("Must pass");
+                });
+        });
 
-//             const result = validate(invalidHash, numbersHash);
-//             result.valid.should.be.false();
-//             should(result.errors["three"][0]).equal("Value is not a valid number");
-//         });
+        it("must fail on invalid numbers", done => {
+            const invalidHash = {
+                one: 1,
+                two: 2,
+                three: "three"
+            };
 
-//         it("must not fail and skip invalid if configured", () => {
+            validate(invalidHash, numbersHash)
+                .then(() => done("Must fail"))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "three": ["Value is not a valid number."]
+                    });
+                }));
+        });
 
-//             const numbersHashWithSkip = hash(
-//                 num().required().must(n => n > 0 && n < 10)
-//             ).keepOnlyValid();
+        it("must not fail and skip invalid if configured", done => {
 
-//             const invalidHash = {
-//                 one: 1,
-//                 two: 2,
-//                 three: "three"
-//             };
+            const numbersHashWithSkip = rules.hash(
+                rules.num().required().must(n => n > 0 && n < 10)
+            ).skipInvalidElements();
 
-//             const result = validate(invalidHash, numbersHashWithSkip);
+            const invalidHash = {
+                one: 1,
+                two: 2,
+                three: "three"
+            };
 
-//             result.valid.should.be.true();
-//             result.value.should.deepEqual({
-//                 one: 1,
-//                 two: 2
-//             });
-//         });
-//     });
+            validate(invalidHash, numbersHashWithSkip)
+                .then(r => assertBlock(done, () => {
+                    r.should.deepEqual({
+                        one: 1,
+                        two: 2
+                    });
+                }))
+                .catch(() => done("Must pass!"));
+        });
+    });
 
-//     describe("for objects hash", () => {
-//         const objectHash = hash(
-//             obj({
-//                 id: num().required(),
-//                 title: str().required()
-//             })
-//         );
+    // describe("for objects hash", () => {
+    //     const objectHash = hash(
+    //         obj({
+    //             id: num().required(),
+    //             title: str().required()
+    //         })
+    //     );
 
-//         it("must pass on valid hash", () => {
-//             const validHash = {
-//                 "1": {
-//                     id: 1,
-//                     title: "one"
-//                 },
-//                 "2": {
-//                     id: 2,
-//                     title: "two"
-//                 }
-//             };
+    //     it("must pass on valid hash", () => {
+    //         const validHash = {
+    //             "1": {
+    //                 id: 1,
+    //                 title: "one"
+    //             },
+    //             "2": {
+    //                 id: 2,
+    //                 title: "two"
+    //             }
+    //         };
 
-//             const result = validate<any, any>(validHash, objectHash);
+    //         const result = validate<any, any>(validHash, objectHash);
 
-//             result.valid.should.be.true();
-//             result.value.should.deepEqual(validHash);
-//         });
+    //         result.valid.should.be.true();
+    //         result.value.should.deepEqual(validHash);
+    //     });
 
-//     });
-// };
+    // });
+};

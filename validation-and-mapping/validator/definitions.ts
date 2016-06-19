@@ -41,6 +41,12 @@ export interface IValidationContext {
     property(propertyName: string, errorCallback?: (errorMessage: string) => boolean): IValidationContext;
     /** Creates nested validation context represents array element access by index. */
     index(index: number, errorCallback?: (errorMessage: string) => boolean): IValidationContext;
+
+    /** Creates a copy of current validation context which don't put errors into inner error accumulator until flush method called. */
+    bufferErrors(): IValidationContext;
+
+    /** Flushed buffered errors to inner error accumulator. */
+    flushErrors(): void;
 }
 
 /**

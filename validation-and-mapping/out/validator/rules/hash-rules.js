@@ -33,15 +33,15 @@ var HashValidationRuleCore = (function () {
         var _this = this;
         var hashKeys = [];
         for (var key in hash) {
-            hashKeys.push(hash);
+            hashKeys.push(key);
         }
         var valid = true;
         var run = function () {
             if (hashKeys.length) {
                 var key_1 = hashKeys.shift();
                 var inputValue = hash[key_1];
-                var keyContext = context.property(key_1);
-                _this.elementValidationRule.runValidate(keyContext, function (success) {
+                var keyContext_1 = context.property("" + key_1).bufferErrors();
+                _this.elementValidationRule.runValidate(keyContext_1, function (success) {
                     if (_this.skipInvalidElements) {
                         if (!success) {
                             delete hash[key_1];
@@ -49,6 +49,7 @@ var HashValidationRuleCore = (function () {
                     }
                     else {
                         valid = valid && success;
+                        keyContext_1.flushErrors();
                     }
                     run();
                 }, inputValue, hash, rootObject);
