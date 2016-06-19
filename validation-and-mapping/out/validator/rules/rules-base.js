@@ -9,9 +9,15 @@ function ensureRuleOptions(options, defaultRuleOptions) {
     if (!options) {
         throw new Error("Options is required");
     }
+    if (defaultRuleOptions.stopOnFailure === null || defaultRuleOptions.stopOnFailure === undefined) {
+        defaultRuleOptions.stopOnFailure = false;
+    }
+    if (options.stopOnFailure === null || options.stopOnFailure === undefined) {
+        options.stopOnFailure = defaultRuleOptions.stopOnFailure;
+    }
     var result = {
         errorMessage: options.errorMessage || defaultRuleOptions.errorMessage,
-        stopOnFailure: options.stopOnFailure || defaultRuleOptions.stopOnFailure || false
+        stopOnFailure: options.stopOnFailure
     };
     if (!result.errorMessage) {
         throw new Error("Error message is required.");
@@ -92,21 +98,6 @@ var SequentialRuleSet = (function () {
         }
         combineRules.apply(void 0, this.rules).runValidate(context, doneCallback, parsedValue, validatingObject, rootObject);
     };
-    SequentialRuleSet.prototype.withRule = function (rule, putRuleFirst) {
-        if (putRuleFirst === void 0) { putRuleFirst = false; }
-        if (!rule) {
-            throw new Error("rule is required");
-        }
-        var copy = this.clone();
-        copy.stopOnFailure = this.stopOnFailure;
-        if (putRuleFirst) {
-            copy.rules = [rule].concat(this.rules);
-        }
-        else {
-            copy.rules = this.rules.concat([rule]);
-        }
-        return copy;
-    };
     /**
      * Adds a rule which uses custom functions for validation and converting.
      * If parsing function is not provided value is passed to validation function without conversion.
@@ -119,7 +110,7 @@ var SequentialRuleSet = (function () {
         }
         parseFn = (parseFn || (function (input) { return input; }));
         return this.withRule({
-            stopOnFailure: stopOnFailure || false,
+            stopOnFailure: stopOnFailure,
             runParse: parseFn,
             runValidate: function (context, done, inputValue, validatingObject, rootObject) {
                 validationFn(function (errorMessage) {
@@ -196,6 +187,21 @@ var SequentialRuleSet = (function () {
                 done();
             }
         }, null, false, options.stopOnFailure);
+    };
+    SequentialRuleSet.prototype.withRule = function (rule, putRuleFirst) {
+        if (putRuleFirst === void 0) { putRuleFirst = false; }
+        if (!rule) {
+            throw new Error("rule is required");
+        }
+        var copy = this.clone();
+        copy.stopOnFailure = this.stopOnFailure;
+        if (putRuleFirst) {
+            copy.rules = [rule].concat(this.rules);
+        }
+        else {
+            copy.rules = this.rules.concat([rule]);
+        }
+        return copy;
     };
     return SequentialRuleSet;
 }());
@@ -301,19 +307,23 @@ var EmptyRule = (function () {
 exports.EmptyRule = EmptyRule;
 var AnyRules = (function (_super) {
     __extends(AnyRules, _super);
-    function AnyRules() {
-        _super.apply(this, arguments);
+    function AnyRules(stopOnFailure) {
+        _super.call(this);
+        this.stopOnFailure = stopOnFailure;
     }
     AnyRules.prototype.clone = function () {
-        return new AnyRules();
+        return new AnyRules(this.stopOnFailure);
     };
     return AnyRules;
 }(SequentialRuleSet));
 exports.AnyRules = AnyRules;
 /** Validates any value using given predicate. */
 function any(predicate, options) {
+    options = ensureRuleOptions(options, {
+        stopOnFailure: false
+    });
     predicate = predicate || (function (v) { return true; });
-    return new AnyRules().must(predicate, options);
+    return new AnyRules(options.stopOnFailure).must(predicate, options);
 }
 exports.any = any;
 //# sourceMappingURL=rules-base.js.map

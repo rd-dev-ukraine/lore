@@ -66,7 +66,7 @@ exports.default = function () {
                 id: validator_1.rules.num().required(),
                 price: validator_1.rules.num().required(),
                 retailPrice: validator_1.rules.num().required()
-            }).after(function (v) { return v["price"] < v["retailPrice"]; }, "Price is not profitable");
+            }).after(function (v) { return v["price"] < v["retailPrice"]; }, { errorMessage: "Price is not profitable" });
             var result = validator_1.validateWithPromise({
                 id: 10,
                 price: 100,
@@ -84,7 +84,7 @@ exports.default = function () {
                 id: validator_1.rules.num().required().must(function (v) { return v > 100; }, { errorMessage: "ID must be greater than 100" }),
                 price: validator_1.rules.num().required(),
                 retailPrice: validator_1.rules.num().required()
-            }).before(function (v) { return v["price"] < v["retailPrice"]; }, "Price is not profitable");
+            }).before(function (v) { return v["price"] < v["retailPrice"]; }, { errorMessage: "Price is not profitable", stopOnFailure: true });
             var result = validator_1.validateWithPromise({
                 id: 10,
                 price: 100,
@@ -104,9 +104,9 @@ exports.default = function () {
             delivery: validator_1.rules.obj({
                 price: validator_1.rules.num(),
                 address: validator_1.rules.obj({
-                    code: validator_1.rules.num().required("Code is required."),
+                    code: validator_1.rules.num().required({ errorMessage: "Code is required." }),
                     addressLine1: validator_1.rules.str()
-                }).required("Address is required")
+                }).required({ errorMessage: "Address is required" })
             }).required()
         });
         it("must correct build path for invalid most nested object", function (done) {
@@ -131,7 +131,7 @@ exports.default = function () {
             delivery: validator_1.rules.obj({
                 price: validator_1.rules.num().required().must(function (v) { return v > 0; }),
                 address: validator_1.rules.str().required().notEmpty()
-            }).required("Delivery data is required")
+            }).required({ errorMessage: "Delivery data is required" })
         });
         it("should fail on nested object missing", function (done) {
             var invalidObject = {
@@ -154,7 +154,7 @@ exports.default = function () {
             title: validator_1.rules.str().required().must(function (s) { return s.length < 10; }),
             delivery: validator_1.rules.obj({
                 price: validator_1.rules.num()
-                    .required({ errorMessage: "Price is required" })
+                    .required({ errorMessage: "Price is required", stopOnFailure: false })
                     .must(function (v) { return v > 0; }, { errorMessage: "Price must be greater than zero" }),
                 address: validator_1.rules.str().required().notEmpty()
             })
@@ -273,11 +273,11 @@ exports.default = function () {
                 id: "sdfsdf",
                 title: "test"
             };
-            validator_1.validateWithPromise(invalidObject, idValidator, titleValidator, idValidityValidator)
+            validator_1.validateWithPromise(invalidObject, idValidator.stopOnFail(false), titleValidator.stopOnFail(false), idValidityValidator.stopOnFail(false))
                 .then(function () { return done("Must fail"); })
                 .catch(function (err) { return utils_1.assertBlock(done, function () {
                 err.should.deepEqual({
-                    "id": ["Value is not a valid number", "Value is not a valid number"]
+                    "id": ["Value is not a valid number.", "Value is not a valid number."]
                 });
             }); });
         });

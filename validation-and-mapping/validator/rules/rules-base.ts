@@ -6,9 +6,17 @@ export function ensureRuleOptions(options: RuleOptions, defaultRuleOptions: Rule
         throw new Error("Options is required");
     }
 
+    if (defaultRuleOptions.stopOnFailure === null || defaultRuleOptions.stopOnFailure === undefined) {
+        defaultRuleOptions.stopOnFailure = false;
+    }
+
+    if (options.stopOnFailure === null || options.stopOnFailure === undefined) {
+        options.stopOnFailure = defaultRuleOptions.stopOnFailure;
+    }
+
     const result: RuleOptions = {
         errorMessage: options.errorMessage || defaultRuleOptions.errorMessage,
-        stopOnFailure: options.stopOnFailure || defaultRuleOptions.stopOnFailure || false
+        stopOnFailure: options.stopOnFailure
     };
 
     if (!result.errorMessage) {
@@ -88,8 +96,6 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
     stopOnFailure = false;
 
-    protected abstract clone(): SequentialRuleSet<T>;
-    
     /** Runs parsing on all rules. */
     runParse(inputValue: any, validatingObject?: any, rootObject?: any): T {
         return combineRules(...this.rules).runParse(inputValue, validatingObject, rootObject);
@@ -119,25 +125,6 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
         );
     }
 
-    protected withRule(rule: ValidationRule<T>, putRuleFirst: boolean = false): this {
-        if (!rule) {
-            throw new Error("rule is required");
-        }
-
-        const copy = this.clone();
-
-        copy.stopOnFailure = this.stopOnFailure;
-
-        if (putRuleFirst) {
-            copy.rules = [rule, ...this.rules];
-        }
-        else {
-            copy.rules = [...this.rules, rule];
-        }
-
-        return <this>copy;
-    }
-
     /** 
      * Adds a rule which uses custom functions for validation and converting. 
      * If parsing function is not provided value is passed to validation function without conversion. 
@@ -156,7 +143,7 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
 
         return this.withRule(
             {
-                stopOnFailure: stopOnFailure || false,
+                stopOnFailure: stopOnFailure,
 
                 runParse: parseFn,
 
@@ -269,6 +256,27 @@ export abstract class SequentialRuleSet<T> implements ValidationRule<T> {
             false,
             options.stopOnFailure);
     }
+
+    protected withRule(rule: ValidationRule<T>, putRuleFirst: boolean = false): this {
+        if (!rule) {
+            throw new Error("rule is required");
+        }
+
+        const copy = this.clone();
+
+        copy.stopOnFailure = this.stopOnFailure;
+
+        if (putRuleFirst) {
+            copy.rules = [rule, ...this.rules];
+        }
+        else {
+            copy.rules = [...this.rules, rule];
+        }
+
+        return <this>copy;
+    }
+
+    protected abstract clone(): SequentialRuleSet<T>;
 }
 
 /** 
@@ -371,7 +379,7 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        
+
         return this.runBefore(any<T>(predicate, options));
     }
 
@@ -379,7 +387,7 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        
+
         return this.runAfter(any<T>(predicate, options));
     }
 
@@ -415,14 +423,22 @@ export class EmptyRule<T> implements ValidationRule<T> {
 }
 
 export class AnyRules<T> extends SequentialRuleSet<T> {
+    constructor(stopOnFailure: boolean) {
+        super();
+        this.stopOnFailure = stopOnFailure;
+    }
+
     protected clone(): AnyRules<T> {
-        return new AnyRules<T>();
+        return new AnyRules<T>(this.stopOnFailure);
     }
 }
 
 /** Validates any value using given predicate. */
 export function any<T>(predicate?: (value: T, entity?: any, rootEntity?: any) => boolean, options?: RuleOptions): AnyRules<T> {
+    options = ensureRuleOptions(options, {
+        stopOnFailure: false
+    });
 
     predicate = predicate || (v => true);
-    return new AnyRules<T>().must(predicate, options);
+    return new AnyRules<T>(options.stopOnFailure).must(predicate, options);
 }

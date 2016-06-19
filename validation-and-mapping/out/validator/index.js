@@ -16,37 +16,25 @@ function validateWithCallback(value, done) {
     }
     var errorAccumulator = new error_accumulator_1.default();
     var validationContext = new validation_context_1.default("", errorAccumulator);
-    var val = value;
-    var valid = true;
-    var runValidator = function () {
-        var validator = validators.shift();
-        if (validator) {
-            val = validator.runParse(val, val, val);
-            validator.runValidate(validationContext, function (success) {
-                valid = valid && success;
-                // Run next validator recursively.
-                runValidator();
-            }, val, value, value);
+    var rule = rules.combineRules.apply(rules, validators);
+    var parsedValue = rule.runParse(value, value, value);
+    rule.runValidate(validationContext, function () {
+        if (errorAccumulator.valid()) {
+            var validationResult = {
+                valid: true,
+                convertedValue: parsedValue
+            };
+            done(validationResult);
         }
         else {
-            if (errorAccumulator.valid()) {
-                var validationResult = {
-                    valid: true,
-                    convertedValue: val
-                };
-                done(validationResult);
-            }
-            else {
-                var validationResult = {
-                    valid: false,
-                    convertedValue: null,
-                    errors: errorAccumulator.errors()
-                };
-                done(validationResult);
-            }
+            var validationResult = {
+                valid: false,
+                convertedValue: null,
+                errors: errorAccumulator.errors()
+            };
+            done(validationResult);
         }
-    };
-    runValidator();
+    }, parsedValue, parsedValue, parsedValue);
 }
 exports.validateWithCallback = validateWithCallback;
 function validateWithPromise(value) {

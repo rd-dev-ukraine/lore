@@ -18,32 +18,17 @@ export function validateWithCallback<T>(value: any, done: (result: ValidationRes
     const errorAccumulator = new ErrorAccumulator();
     const validationContext = new ValidationContext("", errorAccumulator);
 
-    let val = value;
-    let valid = true;
-    const runValidator = () => {
-        const validator = validators.shift();
+    const rule = rules.combineRules(...validators);
 
-        if (validator) {
-            val = validator.runParse(val, val, val);
+    const parsedValue = rule.runParse(value, value, value);
 
-            validator.runValidate(
-                validationContext,
-                success => {
-                    valid = valid && success;
-
-                    // Run next validator recursively.
-                    runValidator();
-                },
-                val,
-                value,
-                value);
-        }
-        else {
-
+    rule.runValidate(
+        validationContext,
+        () => {
             if (errorAccumulator.valid()) {
                 const validationResult: ValidationResult<T> = {
                     valid: true,
-                    convertedValue: val
+                    convertedValue: parsedValue
                 };
                 done(validationResult);
             }
@@ -55,10 +40,10 @@ export function validateWithCallback<T>(value: any, done: (result: ValidationRes
                 };
                 done(validationResult);
             }
-        }        
-    };
-
-    runValidator();
+        },
+        parsedValue,
+        parsedValue,
+        parsedValue);
 }
 
 export function validateWithPromise<T>(value: any, ...validators: ValidationRule<T>[]): Promise<T> {
@@ -69,7 +54,7 @@ export function validateWithPromise<T>(value: any, ...validators: ValidationRule
     return new Promise((resolve, reject) => {
         validateWithCallback(
             value,
-            result => {                
+            result => {
                 if (result.valid) {
                     resolve(result.convertedValue);
                 }

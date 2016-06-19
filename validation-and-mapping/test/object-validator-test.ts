@@ -73,7 +73,7 @@ export default () => {
                 id: rules.num().required(),
                 price: rules.num().required(),
                 retailPrice: rules.num().required()
-            }).after(v => v["price"] < v["retailPrice"], "Price is not profitable");
+            }).after(v => v["price"] < v["retailPrice"], { errorMessage: "Price is not profitable" });
 
             const result = validate<any>(
                 {
@@ -95,7 +95,7 @@ export default () => {
                 id: rules.num().required().must(v => v > 100, { errorMessage: "ID must be greater than 100" }),
                 price: rules.num().required(),
                 retailPrice: rules.num().required()
-            }).before(v => v["price"] < v["retailPrice"], "Price is not profitable");
+            }).before(v => v["price"] < v["retailPrice"], { errorMessage: "Price is not profitable", stopOnFailure: true });
 
             const result = validate<any>({
                 id: 10,
@@ -117,9 +117,9 @@ export default () => {
             delivery: rules.obj({
                 price: rules.num(),
                 address: rules.obj({
-                    code: rules.num().required("Code is required."),
+                    code: rules.num().required({ errorMessage: "Code is required." }),
                     addressLine1: rules.str()
-                }).required("Address is required")
+                }).required({ errorMessage: "Address is required" })
             }).required()
         });
 
@@ -147,7 +147,7 @@ export default () => {
             delivery: rules.obj({
                 price: rules.num().required().must(v => v > 0),
                 address: rules.str().required().notEmpty()
-            }).required("Delivery data is required")
+            }).required({ errorMessage: "Delivery data is required" })
         });
 
         it("should fail on nested object missing", done => {
@@ -173,7 +173,7 @@ export default () => {
             title: rules.str().required().must(s => s.length < 10),
             delivery: rules.obj({
                 price: rules.num()
-                    .required({ errorMessage: "Price is required" })
+                    .required({ errorMessage: "Price is required", stopOnFailure: false })
                     .must(v => v > 0, { errorMessage: "Price must be greater than zero" }),
                 address: rules.str().required().notEmpty()
             })
@@ -308,11 +308,11 @@ export default () => {
                 title: "test"
             };
 
-            validate(invalidObject, idValidator, titleValidator, idValidityValidator)
+            validate(invalidObject, idValidator.stopOnFail(false), titleValidator.stopOnFail(false), idValidityValidator.stopOnFail(false))
                 .then(() => done("Must fail"))
                 .catch(err => assertBlock(done, () => {
                     err.should.deepEqual({
-                        "id": ["Value is not a valid number", "Value is not a valid number"]
+                        "id": ["Value is not a valid number.", "Value is not a valid number."]
                     })
                 }));
         });
