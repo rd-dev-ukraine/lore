@@ -34,6 +34,7 @@ var ArrayValidationRuleCore = (function () {
                 if (_this.filterElementFn && !_this.filterElementFn(element, srcIndex)) {
                     array.splice(index, 1);
                     srcIndex++;
+                    run();
                 }
                 else {
                     var elementContext = context.index(srcIndex);
@@ -48,6 +49,7 @@ var ArrayValidationRuleCore = (function () {
                             index++;
                         }
                         srcIndex++;
+                        run();
                     }, element, array, rootObject);
                 }
             }

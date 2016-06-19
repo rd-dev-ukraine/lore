@@ -245,7 +245,6 @@ export default () => {
                         }
                     })
                 })).catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
-        })
-
+        });
     });
 };

@@ -42,6 +42,8 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
                 if (this.filterElementFn && !this.filterElementFn(element, srcIndex)) {
                     array.splice(index, 1);
                     srcIndex++;
+
+                    run();
                 }
                 else {
                     const elementContext = context.index(srcIndex);
@@ -60,6 +62,8 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
                             }
 
                             srcIndex++;
+
+                            run();
                         },
                         element,
                         array,

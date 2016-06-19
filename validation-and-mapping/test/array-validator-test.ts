@@ -1,54 +1,95 @@
 import * as should from "should";
 
-// import { validate, obj, objOptional, str, num, hash, hashOptional, arr, arrOptional } from "../validator";
+import {assertBlock } from "./utils";
+import { validateWithPromise as validate, rules } from "../validator";
 
-// export default () => {
-//     describe("for number array", () => {
-//         const numberArrayValidator = arr(
-//             num().required().must(v => v > 0 && v < 10)
-//         );
 
-//         it("should pass for valid array", () => {
-//             const validArray = [1, 2, 4];
+export default () => {
+    describe("for number array", () => {
+        const numberArrayValidator = rules.arr(
+            rules.num().required().must(v => v > 0 && v < 10)
+        );
 
-//             const result = validate(validArray, numberArrayValidator);
+        it("should pass for valid array", done => {
+            const validArray = [1, 2, 4];
 
-//             result.valid.should.be.true();
-//             result.value.should.deepEqual(validArray);
-//         });
+            validate(validArray, numberArrayValidator)
+                .then(r => assertBlock(done, () => {
+                    should(r).deepEqual([1, 2, 4]);
+                }))
+                .catch(err => done("Must not fail but failed with error " + JSON.stringify(err)));
+        });
 
-//         it("should fail for invalid array", () => {
-//             const invalidArray = [1, 2, "sad"];
+        it("should fail for invalid array", done => {
+            const invalidArray = [1, 2, "sad"];
 
-//             const result = validate(invalidArray, numberArrayValidator);
-//             result.valid.should.be.false();
-//             result.errors["[2]"][0].should.equal("Value is not a valid number");
-//         });
+            validate(invalidArray, numberArrayValidator)
+                .then(r => done("Must fail but passed with result " + JSON.stringify(r)))
+                .catch(err => assertBlock(done, () => {
 
-//         it("should support filtering", () => {
-//             const numberArrayValidatorWithFilter = arr(
-//                 num().required().must(v => v > 0 && v < 10)
-//             ).filterElements(v => v < 10);
+                    err.should.deepEqual({
+                        "[2]": ["Value is not a valid number."]
+                    });
 
-//             const numbers = [1, 2, 10, 20];
+                }));
+        });
 
-//             const result = validate(numbers, numberArrayValidatorWithFilter);
-//             result.valid.should.be.true();
-//             result.value.should.deepEqual([1, 2]);
-//         });
+        it("should support filtering", done => {
+            const numberArrayValidatorWithFilter = rules.arr(
+                rules.num().required().must(v => v > 0 && v < 10)
+            ).filter(v => v < 10);
 
-//         it("should use target indexes in error path when fail after filtering", () => {
-//             const numberArrayValidatorWithFilter = arr(
-//                 num().required().must(v => v > 0 && v < 10)
-//             ).filterElements(v => v < 50);
+            const numbers = [1, 2, 10, 20];
 
-//             const numbers = [1, 2, 100, 200, 4, 300, 20];
+            validate(numbers, numberArrayValidatorWithFilter)
+                .then(r => assertBlock(done, () => {
+                    r.should.deepEqual([1, 2]);
+                }))
+                .catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
 
-//             const result = validate(numbers, numberArrayValidatorWithFilter);
-//             result.valid.should.be.false();
-//             should(result.value).be.null();
-//             result.errors["[6]"][0].should.equal("Value is invalid");
-//         });
+        it("should use target indexes in error path when fail after filtering", done => {
+            const numberArrayValidatorWithFilter = rules.arr(
+                rules.num().required().must(v => v > 0 && v < 10, { errorMessage: "Too large" })
+            ).filter(v => v < 50);
 
-//     });
-// };
+            const numbers = [1, 2, 100, 200, 4, 300, 20];
+
+            validate(numbers, numberArrayValidatorWithFilter)
+                .then(r => done("Must fail but passed with result " + JSON.stringify(r)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "[6]": ["Too large"]
+                    });
+                }));
+        });
+
+        it("should correctly build path on failed element validator", done => {
+            const rule = rules.arr(
+                rules.obj({
+                    id: rules.num().required().must(v => v < 10, { errorMessage: "Too large" }),
+                    title: rules.str()
+                })
+            );
+
+            validate(
+                [
+                    {
+                        id: 1,
+                        title: "one"
+                    },
+                    {
+                        id: 10,
+                        title: "ten"
+                    }
+                ],
+                rule)
+                .then(r => done("Must fail but passed with result " + JSON.stringify(r)))
+                .catch(err => assertBlock(done, () => {
+                    err.should.deepEqual({
+                        "[1].id": ["Too large"]
+                    })
+                }));
+        });
+    });
+};
