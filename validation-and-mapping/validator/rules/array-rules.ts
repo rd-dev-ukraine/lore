@@ -31,11 +31,13 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
         rootObject?: any): void {
 
         let srcIndex = 0;
+        let srcLength = array.length;
         let index = 0;
 
         let valid = true;
+
         const run = () => {
-            if (index < array.length) {
+            if (srcIndex < srcLength) {
 
                 const element = array[index];
 
@@ -46,7 +48,7 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
                     run();
                 }
                 else {
-                    const elementContext = context.index(srcIndex);
+                    const elementContext = context.index(srcIndex).bufferErrors();
 
                     this.elementValidationRule.runValidate(
                         elementContext,
@@ -55,14 +57,18 @@ export class ArrayValidationRuleCore<TElement> implements ValidationRule<TElemen
                                 if (!success) {
                                     array.splice(index, 1);
                                 }
+                                else {
+                                    index++;
+                                }
                             }
                             else {
+                                elementContext.flushErrors();
+
                                 valid = valid && success;
                                 index++;
                             }
 
                             srcIndex++;
-
                             run();
                         },
                         element,
@@ -106,12 +112,12 @@ export class ArrayValidationRule<TElement> extends EnclosingValidationRuleBase<T
      * Don't fail on invalid element. Instead don't include invalid elements in result array.
      * Note new rule never fails instead it returns empty array.
      */
-    skipInvalidElements(): this {
-        return <this>new ArrayValidationRule<TElement>(
+    skipInvalidElements(skipInvalidElements = true): this {
+        return this.withMainRule(new ArrayValidationRule<TElement>(
             this.elementValidationRule,
-            true,
+            skipInvalidElements,
             this.filterElementFn,
-            this.stopOnMainRuleFailure);
+            this.stopOnMainRuleFailure));
     }
 
     /** Filter result array by applying predicate to each hash item and include only items passed the test. */
@@ -120,11 +126,11 @@ export class ArrayValidationRule<TElement> extends EnclosingValidationRuleBase<T
             throw new Error("Predicate is required.");
         }
 
-        return <this>new ArrayValidationRule<TElement>(
+        return this.withMainRule(new ArrayValidationRule<TElement>(
             this.elementValidationRule,
             this.skipInvalidElementsProp,
             predicate,
-            this.stopOnMainRuleFailure);
+            this.stopOnMainRuleFailure));
     }
 }
 

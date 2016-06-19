@@ -281,6 +281,14 @@ var EnclosingValidationRuleBase = (function () {
         }
         return this.runAfter(any(predicate, options));
     };
+    EnclosingValidationRuleBase.prototype.withMainRule = function (rule) {
+        if (!rule) {
+            throw new Error("Rule is required.");
+        }
+        var result = this.copy();
+        result.rule = rule;
+        return result;
+    };
     EnclosingValidationRuleBase.prototype.copy = function () {
         var result = this.clone();
         result.rulesBefore = this.rulesBefore.slice();

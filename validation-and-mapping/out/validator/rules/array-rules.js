@@ -26,10 +26,11 @@ var ArrayValidationRuleCore = (function () {
     ArrayValidationRuleCore.prototype.runValidate = function (context, doneCallback, array, validatingObject, rootObject) {
         var _this = this;
         var srcIndex = 0;
+        var srcLength = array.length;
         var index = 0;
         var valid = true;
         var run = function () {
-            if (index < array.length) {
+            if (srcIndex < srcLength) {
                 var element = array[index];
                 if (_this.filterElementFn && !_this.filterElementFn(element, srcIndex)) {
                     array.splice(index, 1);
@@ -37,14 +38,18 @@ var ArrayValidationRuleCore = (function () {
                     run();
                 }
                 else {
-                    var elementContext = context.index(srcIndex);
-                    _this.elementValidationRule.runValidate(elementContext, function (success) {
+                    var elementContext_1 = context.index(srcIndex).bufferErrors();
+                    _this.elementValidationRule.runValidate(elementContext_1, function (success) {
                         if (_this.skipInvalidElements) {
                             if (!success) {
                                 array.splice(index, 1);
                             }
+                            else {
+                                index++;
+                            }
                         }
                         else {
+                            elementContext_1.flushErrors();
                             valid = valid && success;
                             index++;
                         }
@@ -78,15 +83,16 @@ var ArrayValidationRule = (function (_super) {
      * Don't fail on invalid element. Instead don't include invalid elements in result array.
      * Note new rule never fails instead it returns empty array.
      */
-    ArrayValidationRule.prototype.skipInvalidElements = function () {
-        return new ArrayValidationRule(this.elementValidationRule, true, this.filterElementFn, this.stopOnMainRuleFailure);
+    ArrayValidationRule.prototype.skipInvalidElements = function (skipInvalidElements) {
+        if (skipInvalidElements === void 0) { skipInvalidElements = true; }
+        return this.withMainRule(new ArrayValidationRule(this.elementValidationRule, skipInvalidElements, this.filterElementFn, this.stopOnMainRuleFailure));
     };
     /** Filter result array by applying predicate to each hash item and include only items passed the test. */
     ArrayValidationRule.prototype.filter = function (predicate) {
         if (!predicate) {
             throw new Error("Predicate is required.");
         }
-        return new ArrayValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, predicate, this.stopOnMainRuleFailure);
+        return this.withMainRule(new ArrayValidationRule(this.elementValidationRule, this.skipInvalidElementsProp, predicate, this.stopOnMainRuleFailure));
     };
     return ArrayValidationRule;
 }(rules_base_1.EnclosingValidationRuleBase));

@@ -391,6 +391,17 @@ export abstract class EnclosingValidationRuleBase<T> implements ValidationRule<T
         return this.runAfter(any<T>(predicate, options));
     }
 
+    protected withMainRule(rule: ValidationRule<T>): this {
+        if (!rule) {
+            throw new Error("Rule is required.");
+        }
+
+        const result = this.copy();
+        result.rule = rule;
+
+        return result;
+    }
+
     protected abstract clone(): this;
 
     private copy(): this {

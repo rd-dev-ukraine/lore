@@ -91,5 +91,43 @@ export default () => {
                     })
                 }));
         });
+
+        it("should run before rules on non-filtered array", done => {
+            const rule = rules.arr(
+                rules.num().required()
+            ).before(arr => arr[1] === 20, { errorMessage: "Element was filtered out" })
+                .filter(e => e < 10);
+
+            validate([1, 20, 3], rule)
+                .then(r => assertBlock(done, () => {
+                    r.should.deepEqual([1, 3]);
+                }))
+                .catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
+
+        it("should run after rules on filtered array", done => {
+            const rule = rules.arr(
+                rules.num().required()
+            ).after(arr => arr[1] === 3, { errorMessage: "Element was not filtered out" })
+                .filter(e => e < 10);
+
+            validate([1, 20, 3], rule)
+                .then(r => assertBlock(done, () => {
+                    r.should.deepEqual([1, 3]);
+                }))
+                .catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
+
+        it("should run after rules on array with skipped invalid elements", done => {
+            const rule = rules.arr(
+                rules.num().required().must(v => v < 10, { errorMessage: "Too large" })
+            ).after(arr => arr[1] === 3, { errorMessage: "Element was not filtered out" }).skipInvalidElements();
+
+            validate([1, 20, 3], rule)
+                .then(r => assertBlock(done, () => {
+                    r.should.deepEqual([1, 3]);
+                }))
+                .catch(err => done("Must pass but failed with error " + JSON.stringify(err)));
+        });
     });
 };

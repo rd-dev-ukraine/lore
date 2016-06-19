@@ -66,6 +66,32 @@ exports.default = function () {
                 });
             }); });
         });
+        it("should run before rules on non-filtered array", function (done) {
+            var rule = validator_1.rules.arr(validator_1.rules.num().required()).before(function (arr) { return arr[1] === 20; }, { errorMessage: "Element was filtered out" })
+                .filter(function (e) { return e < 10; });
+            validator_1.validateWithPromise([1, 20, 3], rule)
+                .then(function (r) { return utils_1.assertBlock(done, function () {
+                r.should.deepEqual([1, 3]);
+            }); })
+                .catch(function (err) { return done("Must pass but failed with error " + JSON.stringify(err)); });
+        });
+        it("should run after rules on filtered array", function (done) {
+            var rule = validator_1.rules.arr(validator_1.rules.num().required()).after(function (arr) { return arr[1] === 3; }, { errorMessage: "Element was not filtered out" })
+                .filter(function (e) { return e < 10; });
+            validator_1.validateWithPromise([1, 20, 3], rule)
+                .then(function (r) { return utils_1.assertBlock(done, function () {
+                r.should.deepEqual([1, 3]);
+            }); })
+                .catch(function (err) { return done("Must pass but failed with error " + JSON.stringify(err)); });
+        });
+        it("should run after rules on array with skipped invalid elements", function (done) {
+            var rule = validator_1.rules.arr(validator_1.rules.num().required().must(function (v) { return v < 10; }, { errorMessage: "Too large" })).after(function (arr) { return arr[1] === 3; }, { errorMessage: "Element was not filtered out" }).skipInvalidElements();
+            validator_1.validateWithPromise([1, 20, 3], rule)
+                .then(function (r) { return utils_1.assertBlock(done, function () {
+                r.should.deepEqual([1, 3]);
+            }); })
+                .catch(function (err) { return done("Must pass but failed with error " + JSON.stringify(err)); });
+        });
     });
 };
 //# sourceMappingURL=array-validator-test.js.map
