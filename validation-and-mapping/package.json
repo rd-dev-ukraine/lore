@@ -1,8 +1,13 @@
 {
   "name": "validation-and-mapping",
   "version": "1.0.0",
-  "description": "Validation and conversion tool for javascript",
-  "main": "index.js",
+  "description": "Validation and conversion tool for plain old javascript objects.",
+  "main": "./out/validator/index.js",
+  "typings": "./out/validation/index",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rd-dev-ukraine/lore.git"
+  },
   "scripts": {
     "test": "mocha ./out/test/index.js"
   },

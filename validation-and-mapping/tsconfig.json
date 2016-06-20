@@ -4,7 +4,8 @@
         "target": "es5",
         "noImplicitAny": false,
         "sourceMap": true,
-        "outDir": "./out"        
+        "outDir": "./out",
+        "declaration": true 
     },
     "include": [
         "./test/tests.ts"
