@@ -1,5 +1,7 @@
 import * as angular from "angular";
 
+export type ClosePopupFunction = () => void;
+
 export class PopupService {
     static Name = "PopupService";
     static $inject = ["$compile"];
@@ -7,7 +9,7 @@ export class PopupService {
     constructor(private $compile: angular.ICompileService) {
     }
 
-    open(popupContentTemplate: string): ($scope: angular.IScope) => void {
+    open(popupContentTemplate: string): ($scope: angular.IScope) => ClosePopupFunction {
         const content = `
                 <div class="popup-overlay">
                     ${popupContentTemplate}
@@ -19,7 +21,8 @@ export class PopupService {
             const body = document.body;
 
             const popupElement = body.appendChild(element[0]);
-            $scope["closePopup"] = () => {
+
+            return () => {
                 body.removeChild(popupElement);
             };
         };

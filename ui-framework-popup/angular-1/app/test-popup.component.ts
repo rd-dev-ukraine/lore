@@ -7,6 +7,7 @@ export class TestPopupComponentController {
     static $inject = ["$scope", PopupService.Name];
 
     text: string = "Open popup with this text";
+    closePopupFn: () => void;
 
     constructor(
         private $scope: angular.IScope,
@@ -15,11 +16,14 @@ export class TestPopupComponentController {
 
     openPopup() {
         const template = `<popup-content text="$c.text" close="$c.closePopup()" ></popup-content>`;
-        this.popupService.open(template)(this.$scope);
+        this.closePopupFn = this.popupService.open(template)(this.$scope);
     }
 
     closePopup() {
-        this.$scope["closePopup"]();
+        if (this.closePopupFn) {
+            this.closePopupFn();
+            this.closePopupFn = null;
+        }
     }
 }
 
