@@ -15,7 +15,8 @@
   },
   "private": true,
   "scripts": {
-    "prepare": "npm install webpack typescript typings webpack-dev-server --global && npm install"
+    "prepare": "npm install webpack typescript typings webpack-dev-server --global && npm install",
+    "server": "webpack-dev-server"
   },
   "author": "Sergey Tokarev",
   "license": "ISC"

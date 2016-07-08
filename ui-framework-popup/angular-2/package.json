@@ -1,0 +1,26 @@
+{
+  "name": "popup-react",
+  "version": "1.0.0",
+  "description": "Example of popup for react",
+  "dependencies": {
+    "angular2": "^2.0.0-beta.17",
+    "es6-shim": "^0.35.1",
+    "reflect-metadata": "^0.1.3",
+    "rxjs": "^5.0.0-beta.10",
+    "zone.js": "^0.6.12"
+  },
+  "devDependencies": {
+    "ts-loader": "^0.8.2",
+    "typescript": "^1.8.10",
+    "typings": "^1.3.1",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1"
+  },
+  "private": true,
+  "scripts": {
+    "prepare": "npm install webpack typescript typings webpack-dev-server --global && npm install",
+    "server": "webpack-dev-server"
+  },
+  "author": "Sergey Tokarev",
+  "license": "ISC"
+}
