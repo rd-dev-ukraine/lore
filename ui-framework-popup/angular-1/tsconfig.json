@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "pretty": true,
+        "removeComments": true,
+        "sourceMap": true,
+        "noEmit": true,
+        "target": "ES5",
+        "jsx": "react",
+        "experimentalDecorators": true
+    }
+}
