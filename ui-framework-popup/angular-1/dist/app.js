@@ -46,7 +46,13 @@
 
 	"use strict";
 	var angular = __webpack_require__(1);
-	angular.module("app", []);
+	var test_popup_component_1 = __webpack_require__(3);
+	var popup_content_component_1 = __webpack_require__(5);
+	var popup_service_1 = __webpack_require__(4);
+	angular.module("app", [])
+	    .service(popup_service_1.PopupService.Name, popup_service_1.PopupService)
+	    .component("testPopup", test_popup_component_1.config)
+	    .component("popupContent", popup_content_component_1.config);
 
 
 /***/ },
@@ -31534,6 +31540,90 @@
 	})(window);
 	
 	!window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var popup_service_1 = __webpack_require__(4);
+	var TestPopupComponentController = (function () {
+	    function TestPopupComponentController($scope, popupService) {
+	        this.$scope = $scope;
+	        this.popupService = popupService;
+	        this.text = "Open popup with this text";
+	    }
+	    TestPopupComponentController.prototype.openPopup = function () {
+	        var template = "<popup-content text=\"$c.text\" close=\"$c.closePopup()\" ></popup-content>";
+	        this.closePopupFn = this.popupService.open(template)(this.$scope);
+	    };
+	    TestPopupComponentController.prototype.closePopup = function () {
+	        if (this.closePopupFn) {
+	            this.closePopupFn();
+	            this.closePopupFn = null;
+	        }
+	    };
+	    TestPopupComponentController.$inject = ["$scope", popup_service_1.PopupService.Name];
+	    return TestPopupComponentController;
+	}());
+	exports.TestPopupComponentController = TestPopupComponentController;
+	exports.config = {
+	    controller: TestPopupComponentController,
+	    controllerAs: "$c",
+	    template: "\n    <div>\n        <div class=\"form-group\">\n            <label>\n                Enter text to display in popup:\n            </label>\n            <input class=\"form-control\" ng-model=\"$c.text\" type=\"text\" />\n        </div>\n        <p>\n            <button class=\"btn btn-primary\" \n                    ng-click=\"$c.openPopup()\">\n                Open popup\n            </button>\n        </p>\n    </div>\n    "
+	};
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var PopupService = (function () {
+	    function PopupService($compile) {
+	        this.$compile = $compile;
+	    }
+	    PopupService.prototype.open = function (popupContentTemplate) {
+	        var _this = this;
+	        var content = "\n                <div class=\"popup-overlay\">\n                    " + popupContentTemplate + "\n                </div>\n                ";
+	        return function ($scope) {
+	            var element = _this.$compile(content)($scope);
+	            var body = document.body;
+	            var popupElement = body.appendChild(element[0]);
+	            return function () {
+	                body.removeChild(popupElement);
+	            };
+	        };
+	    };
+	    PopupService.Name = "PopupService";
+	    PopupService.$inject = ["$compile"];
+	    return PopupService;
+	}());
+	exports.PopupService = PopupService;
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var PopupContentComponentController = (function () {
+	    function PopupContentComponentController() {
+	    }
+	    PopupContentComponentController.prototype.close = function () { };
+	    return PopupContentComponentController;
+	}());
+	exports.PopupContentComponentController = PopupContentComponentController;
+	exports.config = {
+	    bindings: {
+	        text: "=",
+	        close: "&"
+	    },
+	    controller: PopupContentComponentController,
+	    controllerAs: "$c",
+	    template: "\n    <div class=\"alert alert-success\">\n            <h2>\n                {{ $c.text }}\n            </h2>\n            <button class=\"btn btn-warning\"\n                    ng-click=\"$c.close()\" \n                    type=\"button\" >\n                Close popup\n            </button>\n        </div>\n    "
+	};
+
 
 /***/ }
 /******/ ]);

@@ -34,7 +34,7 @@
 /******/ 	__webpack_require__.c = installedModules;
 /******/
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
+/******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(0);
@@ -47,7 +47,8 @@
 	"use strict";
 	var React = __webpack_require__(1);
 	var react_dom_1 = __webpack_require__(33);
-	react_dom_1.render(React.createElement("div", null, "Hello from React"), document.getElementById("react-app"));
+	var test_popup_1 = __webpack_require__(170);
+	react_dom_1.render(React.createElement("div", null, React.createElement(test_popup_1.TestPopup, null)), document.getElementById("react-app"));
 
 
 /***/ },
@@ -20964,6 +20965,126 @@
 	var ReactMount = __webpack_require__(162);
 	
 	module.exports = ReactMount.renderSubtreeIntoContainer;
+
+/***/ },
+/* 170 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var React = __webpack_require__(1);
+	var if_1 = __webpack_require__(171);
+	var popup_1 = __webpack_require__(172);
+	var TestPopup = (function (_super) {
+	    __extends(TestPopup, _super);
+	    function TestPopup() {
+	        _super.call(this);
+	        this.state = {
+	            text: "Content appear in popup",
+	            isPopupVisible: false
+	        };
+	    }
+	    TestPopup.prototype.render = function () {
+	        var _this = this;
+	        return (React.createElement("div", null, React.createElement("div", {className: "form-group"}, React.createElement("label", null, "Enter text to display in popup:"), React.createElement("input", {className: "form-control", value: this.state.text, onChange: function (e) { return _this.setText(e.target.value); }, type: "text"})), React.createElement("p", null, React.createElement("button", {className: "btn btn-primary", onClick: function (e) { return _this.openPopup(); }, type: "button"}, "Open popup")), React.createElement(if_1.IfComponent, {condition: function () { return _this.state.isPopupVisible; }}, React.createElement(popup_1.Popup, null, React.createElement("div", {className: "alert alert-success"}, React.createElement("h2", null, this.state.text), React.createElement("button", {className: "btn btn-warning", onClick: function (e) { return _this.closePopup(); }, type: "button"}, "Close popup"))))));
+	    };
+	    TestPopup.prototype.setText = function (text) {
+	        this.setState(function (state) {
+	            state.text = text;
+	            return state;
+	        });
+	    };
+	    TestPopup.prototype.openPopup = function () {
+	        this.setState(function (state) {
+	            state.isPopupVisible = true;
+	            return state;
+	        });
+	    };
+	    TestPopup.prototype.closePopup = function () {
+	        this.setState(function (state) {
+	            state.isPopupVisible = false;
+	            return state;
+	        });
+	    };
+	    return TestPopup;
+	}(React.Component));
+	exports.TestPopup = TestPopup;
+
+
+/***/ },
+/* 171 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var React = __webpack_require__(1);
+	var IfComponent = (function (_super) {
+	    __extends(IfComponent, _super);
+	    function IfComponent() {
+	        _super.call(this);
+	    }
+	    IfComponent.prototype.render = function () {
+	        if (this.props.condition && this.props.condition()) {
+	            return (React.createElement("div", null, this.props.children));
+	        }
+	        else {
+	            return null;
+	        }
+	    };
+	    return IfComponent;
+	}(React.Component));
+	exports.IfComponent = IfComponent;
+
+
+/***/ },
+/* 172 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var React = __webpack_require__(1);
+	var ReactDOM = __webpack_require__(33);
+	var Popup = (function (_super) {
+	    __extends(Popup, _super);
+	    function Popup() {
+	        _super.call(this);
+	    }
+	    Popup.prototype.render = function () {
+	        return (React.createElement("noscript", null));
+	    };
+	    Popup.prototype.componentDidMount = function () {
+	        this.renderPopup();
+	    };
+	    Popup.prototype.componentDidUpdate = function () {
+	        this.renderPopup();
+	    };
+	    Popup.prototype.componentWillUnmount = function () {
+	        ReactDOM.unmountComponentAtNode(this.popup);
+	        document.body.removeChild(this.popup);
+	    };
+	    Popup.prototype.renderPopup = function () {
+	        if (!this.popup) {
+	            this.popup = document.createElement("div");
+	            document.body.appendChild(this.popup);
+	        }
+	        ReactDOM.render(React.createElement("div", {className: "popup-overlay"}, React.createElement("div", {className: "popup-content"}, this.props.children)), this.popup);
+	    };
+	    return Popup;
+	}(React.Component));
+	exports.Popup = Popup;
+
 
 /***/ }
 /******/ ]);
