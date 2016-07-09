@@ -214,5 +214,112 @@ SystemJS не используется, вместо этого бандлитс
 
 ## Динамическая загрузка 
 
-К чести Angular 2, код динамической загрузки вызывает трудности только при поиске. 
- 
+К чести Angular 2, код динамической загрузки вызывает трудности только при поиске.
+Для динамической загрузки используется класс [ComponentResolver](https://angular.io/docs/ts/latest/api/core/index/ComponentResolver-class.html) в сочетании с [ViewContainerRef](https://angular.io/docs/ts/latest/api/core/index/ViewContainerRef-class.html).
+
+``` typescript
+
+// Асинхронно создает новый компонент по типу.
+// Тип - это класс компонена (ну или его функция-конструктор)
+ loadComponentDynamically(componentType: Type, container: ViewContainerRef) {
+    this.componentResolve
+        .resolveComponent(componentType)
+        .then(factory => container.createComponent(factory))
+        .then(componentRef => {
+            // Получаем доступ к экземпляру класса компонента
+            componentRef.instance;
+            // Получаем доступ ElementRef контейнера, в который помещен компонент
+            componentRef.location;
+            // Получаем доступ к DOM элементу. 
+            componentRef.location.nativeElement;
+            // Удаляем компонент
+            componentRef.destroy();
+        });
+ }
+```
+
+`ComponentResolver` легко получить через dependency injection. 
+`ViewContainerRef`, по-видимому, не может быть создан для произвольного DOM элемента, 
+и может быть только получен через dependency injection для существующего Angular компонента.
+Это значит, что поместить динамически созданный элемент в произвольное место DOM дерева *невозможно*,
+по крайней мере, в релиз-кандидате.
+
+Поэтому, наш механизм для показа поп-апов будет составным. 
+
+Во-первых, у нас будет компонент, в который будут динамически добавляться поп-ап элементы.
+Его нужно будет разместить где-нибудь в дереве компонентов, желательно поближе к корневому элементу.
+Кроме того, никакой из его родительских контейнеров не должен содержать стилей, обрезающих содержимое.
+В коде это `overlay-host.component.ts`. 
+
+Во-вторых, у нас есть вспомогательный компонент, содержащий в себе разметку для окна.
+Это `OverlayComponent`, в который оборачивается динамически создаваемый компонент.
+
+В-третьих, у нас есть сервис, который обеспечивает связь между хост-компонентом для поп-апов и
+клиентами, которые хотят показывать компонент. 
+Сервис достаточно простой, хост-компонент регистрирует себя в нем при создании, 
+и метод сервиса просто перенаправляет вызовы открытия окна этому хост-компоненту.
+
+## Хост-компонент
+
+Я приведу класс целиком, он не очень большой, и потом пройдусь по тонким местам:
+
+``` typescript
+import { Component, ComponentRef, ComponentResolver, OnInit, Type, ViewChild, ViewContainerRef } from "angular2/core";
+
+import { OverlayComponent } from "./overlay.component";
+import { IOverlayHost, OverlayService } from "./overlay.service";
+
+@Component({
+    selector: "overlay-host",
+    template: "<template #container></template>"
+})
+export class OverlayHostComponent implements IOverlayHost, OnInit {
+
+    @ViewChild("container", { read: ViewContainerRef }) container: ViewContainerRef;
+
+    constructor(
+        private overlayService: OverlayService,
+        private componentResolver: ComponentResolver) {
+    }
+
+    openComponentInPopup<T>(componentType: Type): Promise<ComponentRef> {
+        return this.componentResolver
+            .resolveComponent(OverlayComponent)
+            .then(factory => this.container.createComponent(factory))
+            .then((overlayRef: ComponentRef) => {
+
+                return overlayRef.instance
+                    .addComponent(componentType)
+                    .then(result => {
+
+                        result.onDestroy(() => {
+                            overlayRef.destroy();
+                        });
+
+                        const overlay = overlayRef.location.nativeElement;
+                        return result;
+                    });
+            });
+    }
+
+    ngOnInit(): void {
+        this.overlayService.registerHost(this);
+    }
+}
+```
+
+Первое, на что нужно обратить внимание, это как получается `ViewContainerRef` при помощи запроса к содержимому.
+Декоратор `@ViewChild()` позволяет получать `ViewContainerRef` по имени template variable `template: <template #container></template>`.
+`#container` - это и есть template variable, переменная шаблона. 
+К ней можно обращаться по имени, но только в самом шаблоне.
+Чтобы получить доступ к ней из класса компонента, используется упомянутый декоратор. 
+
+Честно говоря, я это нагуглил, и как по мне, это вообще неинтуитивно.
+Это одна из особенностей второго Angular-а, которая мне очень сильно бросилась в глаза, - 
+в документации очень сложно, или же вообще невозможно, найти решения для типовых задач.
+Документация для создания именно бизнес-компонентов нормальная, да и ничего там особо сложного нет.
+Однако для сценариев написания контролов, низкоуровненвых компонентов (то, что было директивами в первом),
+невозможно найти документации. 
+Динамическое создание компонентов, взаимодействие с шаблоном из класса - эти области просто не документированы.
+Даже в описании [@ViewChild](https://angular.io/docs/ts/latest/api/core/index/ViewChild-var.html) ничего не сказано
+о втором параметре.
