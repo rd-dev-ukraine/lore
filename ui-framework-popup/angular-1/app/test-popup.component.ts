@@ -6,6 +6,8 @@ export class TestPopupComponentController {
 
     static $inject = ["$scope", PopupService.Name];
 
+    private popupVisible = false;
+
     text: string = "Open popup with this text";
     closePopupFn: () => void;
 
@@ -25,6 +27,14 @@ export class TestPopupComponentController {
             this.closePopupFn = null;
         }
     }
+
+    openInlinePopup() {
+        this.popupVisible = true;
+    }
+
+    closeInlinePopup() {
+        this.popupVisible = false;
+    }
 }
 
 export const config: angular.IComponentOptions = {
@@ -43,7 +53,15 @@ export const config: angular.IComponentOptions = {
                     ng-click="$c.openPopup()">
                 Open popup
             </button>
+            <button class="btn btn-default" 
+                    ng-click="$c.openInlinePopup()">
+                Open inline 
+            </button>
         </p>
+        <popup ng-if="$c.popupVisible">
+            <popup-content text="$c.text" close="$c.closeInlinePopup()">
+            </popup-content>
+        </popup>
     </div>
     `
 };

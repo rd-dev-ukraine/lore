@@ -48,9 +48,11 @@
 	var angular = __webpack_require__(1);
 	var test_popup_component_1 = __webpack_require__(3);
 	var popup_content_component_1 = __webpack_require__(5);
+	var PopupDirective = __webpack_require__(6);
 	var popup_service_1 = __webpack_require__(4);
 	angular.module("app", [])
 	    .service(popup_service_1.PopupService.Name, popup_service_1.PopupService)
+	    .directive(PopupDirective.name, function () { return PopupDirective.configuration; })
 	    .component("testPopup", test_popup_component_1.config)
 	    .component("popupContent", popup_content_component_1.config);
 
@@ -31551,6 +31553,7 @@
 	    function TestPopupComponentController($scope, popupService) {
 	        this.$scope = $scope;
 	        this.popupService = popupService;
+	        this.popupVisible = false;
 	        this.text = "Open popup with this text";
 	    }
 	    TestPopupComponentController.prototype.openPopup = function () {
@@ -31563,6 +31566,12 @@
 	            this.closePopupFn = null;
 	        }
 	    };
+	    TestPopupComponentController.prototype.openInlinePopup = function () {
+	        this.popupVisible = true;
+	    };
+	    TestPopupComponentController.prototype.closeInlinePopup = function () {
+	        this.popupVisible = false;
+	    };
 	    TestPopupComponentController.$inject = ["$scope", popup_service_1.PopupService.Name];
 	    return TestPopupComponentController;
 	}());
@@ -31570,7 +31579,7 @@
 	exports.config = {
 	    controller: TestPopupComponentController,
 	    controllerAs: "$c",
-	    template: "\n    <div>\n        <div class=\"form-group\">\n            <label>\n                Enter text to display in popup:\n            </label>\n            <input class=\"form-control\" ng-model=\"$c.text\" type=\"text\" />\n        </div>\n        <p>\n            <button class=\"btn btn-primary\" \n                    ng-click=\"$c.openPopup()\">\n                Open popup\n            </button>\n        </p>\n    </div>\n    "
+	    template: "\n    <div>\n        <div class=\"form-group\">\n            <label>\n                Enter text to display in popup:\n            </label>\n            <input class=\"form-control\" ng-model=\"$c.text\" type=\"text\" />\n        </div>\n        <p>\n            <button class=\"btn btn-primary\" \n                    ng-click=\"$c.openPopup()\">\n                Open popup\n            </button>\n            <button class=\"btn btn-default\" \n                    ng-click=\"$c.openInlinePopup()\">\n                Open inline \n            </button>\n        </p>\n        <popup ng-if=\"$.popupVisible\">\n            <popup-content text=\"$c.text\" close=\"$c.closeInlinePopup()\">\n            </popup-content>\n        </popup>\n    </div>\n    "
 	};
 
 
@@ -31622,6 +31631,41 @@
 	    controller: PopupContentComponentController,
 	    controllerAs: "$c",
 	    template: "\n    <div class=\"alert alert-success\">\n            <h2>\n                {{ $c.text }}\n            </h2>\n            <button class=\"btn btn-warning\"\n                    ng-click=\"$c.close()\" \n                    type=\"button\" >\n                Close popup\n            </button>\n        </div>\n    "
+	};
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+	var PopupDirectiveController = (function () {
+	    function PopupDirectiveController(transclude) {
+	        this.transclude = transclude;
+	    }
+	    PopupDirectiveController.prototype.$onInit = function () {
+	        var _this = this;
+	        this.transclude(function (clone) {
+	            var popup = document.createElement("div");
+	            popup.className = "popup-overlay";
+	            popup.appendChild(clone[0]);
+	            _this.content = document.body.appendChild(popup);
+	        });
+	    };
+	    PopupDirectiveController.prototype.$onDestroy = function () {
+	        if (this.content) {
+	            this.content.remove();
+	            this.content = null;
+	        }
+	    };
+	    PopupDirectiveController.$inject = ["$transclude"];
+	    return PopupDirectiveController;
+	}());
+	exports.name = "popup";
+	exports.configuration = {
+	    controller: PopupDirectiveController,
+	    replace: true,
+	    restrict: "E"
 	};
 
 
