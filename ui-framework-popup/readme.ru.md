@@ -442,7 +442,6 @@ export class OverlayHostComponent implements IOverlayHost, OnInit {
                             overlayRef.destroy();
                         });
 
-                        const overlay = overlayRef.location.nativeElement;
                         return result;
                     });
             });
@@ -454,6 +453,11 @@ export class OverlayHostComponent implements IOverlayHost, OnInit {
 }
 ```
 
+Что делает этот код? 
+Он динамически создает компонент, используя его тип (тип компонента в это его функция-конструктор).
+Предварительно создается компонент-обертка (`OverlayComponent`), наш запрошенный компонент добавляется уже к нему.
+Также мы подписываемся на событие `destroy`, чтобы уничтожить обертку при уничтожении компонента. 
+
 Первое, на что нужно обратить внимание, это как получается `ViewContainerRef` при помощи запроса к содержимому.
 Декоратор `@ViewChild()` позволяет получать `ViewContainerRef` по имени template variable `template: <template #container></template>`.
 `#container` - это и есть template variable, переменная шаблона. 
@@ -462,10 +466,73 @@ export class OverlayHostComponent implements IOverlayHost, OnInit {
 
 Честно говоря, я это нагуглил, и как по мне, это вообще неинтуитивно.
 Это одна из особенностей второго Angular-а, которая мне очень сильно бросилась в глаза, - 
-в документации очень сложно, или же вообще невозможно, найти решения для типовых задач.
+в документации очень сложно, или же вообще невозможно, найти решения для типовых задач разработки директив.
 Документация для создания именно бизнес-компонентов нормальная, да и ничего там особо сложного нет.
 Однако для сценариев написания контролов, низкоуровненвых компонентов (то, что было директивами в первом),
 невозможно найти документации. 
 Динамическое создание компонентов, взаимодействие с шаблоном из класса - эти области просто не документированы.
 Даже в описании [@ViewChild](https://angular.io/docs/ts/latest/api/core/index/ViewChild-var.html) ничего не сказано
 о втором параметре.
+
+Код `OverlayHostComponent` - это самое интересное в нашем примере. 
+`OverlayComponent` содержит похожий код для динамического добавления содержимого.
+`OverlayService` связывает хост с клиентами.
+
+Посмотрим теперь, как этим пользоваться:
+
+``` typescript
+import { Component, Input } from "angular2/core";
+
+import { OverlayService } from "./overlay";
+import { PopupContent } from "./popup-content.component";
+
+@Component({
+    selector: "test-popup",
+    template: `
+    <div>
+        <div class="form-group">
+            <label>
+                Enter text to display in popup:
+            </label>
+            <input class="form-control" [(ngModel)]="text" type="text" />
+        </div>
+        <p>
+            <button class="btn btn-primary" 
+                    (click)="openPopup()">
+                Open popup
+            </button>
+        </p>                
+    </div>    
+    `
+})
+export class TestPopup {
+    text: string = "Show me in popup";
+
+    constructor(private overlayService: OverlayService) {
+    }
+
+    openPopup() {
+        this.overlayService
+            .openComponentInPopup(PopupContent)
+            .then(c => {
+                const popup: PopupContent = c.instance;
+                popup.text = this.text;
+                popup.close.subscribe(n => {
+                    c.destroy();
+                });
+            });
+    }
+}
+```  
+
+`OverlayService` указан в `providers` корневого компонента, его не нужно переопределять.
+После создания экземпляра компонента можно получить к нему доступ через `ComponentRef.instance`.
+
+Потом императивно устанавливаем свойства компонента, подписываемся на события.
+
+## Вывод
+
+Честно говоря, это выглядит ужасно.
+Я искренне надеюсь, что я искал недостаточно хорошо, и где-то есть красивый способ, 
+позволяющий разместить компонент в произвольном месте DOM дерева.
+Который позволит связать свойства динамически созданный элемент с родителем декларативно.
