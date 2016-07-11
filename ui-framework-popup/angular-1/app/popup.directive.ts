@@ -1,7 +1,7 @@
 import * as angular from "angular";
 
 export class PopupDirectiveController {
-    private content: Element;
+    private content: Node;
 
     constructor(private transclude: angular.ITranscludeFunction) {
     }
@@ -14,13 +14,13 @@ export class PopupDirectiveController {
                 popup.appendChild(clone[i]);
             }
 
-            this.content = <Element>document.body.appendChild(popup);
+            this.content = document.body.appendChild(popup);
         });
     }
 
     $onDestroy() {
         if (this.content) {
-            this.content.remove();
+            document.body.removeChild(this.content)
             this.content = null;
         }
     }
