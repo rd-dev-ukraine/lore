@@ -536,3 +536,140 @@ export class TestPopup {
 Я искренне надеюсь, что я искал недостаточно хорошо, и где-то есть красивый способ, 
 позволяющий разместить компонент в произвольном месте DOM дерева.
 Который позволит связать свойства динамически созданный элемент с родителем декларативно.
+
+Я долго рассматривал [исходник ngFor](https://github.com/angular/angular/blob/master/modules/%40angular/common/src/directives/ng_for.ts),
+но сомневаюсь, что это решит проблему связывания. 
+Я думал над фабрикой компонентов с динамическими шаблонами, 
+но не уверен, что существует способ динамической регистрации компонентов в массиве `directives`.
+
+Надеюсь, что будет найден или создан нормальный способ помещать компоненты в произвольное место DOM.
+
+# ReactJS
+
+В Реакте стандартный способ отображения компонента в DOM дерево - это метод `render`, 
+который возвращает виртуальный узел виртуального DOM.
+Однако, это совсем не значит, что этот способ единственный.
+Для вставки компонента в произвольное место из метода `render` возвращается `null`,
+и перехватываются lifecycle-методы `componentDidMount`, `componentWillUnmount`, `componentDidUpdate`.
+В `componentDidMount` и `componentDidUpdate`, используя `ReactDOM.render`, можно отрендерить содержимое в любое место.
+В `componentWillUnmount` содержимое, соответственно, уничтожается.
+
+Собственно, код:
+
+``` typescript
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+
+export class Popup extends React.Component<{}, {}> {
+    popup: HTMLElement;
+
+    constructor() {
+        super();
+    }
+
+    render() {
+        return (<noscript></noscript>);
+    }
+
+    componentDidMount() {
+        this.renderPopup();
+    }
+
+    componentDidUpdate() {
+        this.renderPopup();
+    }
+
+    componentWillUnmount() {
+        ReactDOM.unmountComponentAtNode(this.popup);
+        document.body.removeChild(this.popup);
+    }
+    
+    renderPopup() {
+        if (!this.popup) {
+            this.popup = document.createElement("div");
+            document.body.appendChild(this.popup);
+        }
+
+        ReactDOM.render(
+            <div className="popup-overlay">
+                <div className="popup-content">
+                    { this.props.children }
+                </div>
+            </div>,
+            this.popup);
+    }
+}
+
+```
+
+
+Все просто и понятно. 
+Видно, что такой сценарий создателями Реакта продумывался.
+
+Вообще Реакт после Angular производит очень приятное впечатление. 
+Отсутствуют костыли отслеживания изменений, которые вроде бы не нужно использовать, но всегда приходится.
+Простой доступ к DOM элементам, если он нужен. 
+Простой доступ к содержимому реакт-элемента через `children`, причем это не строка и не HTMLElement, 
+а структура, содержащая в себе полноценные реакт-элементы (для работы с ними нужно использовать `React.Children`).
+
+Ладно, теперь посмотрим, как это использовать. Привожу, для краткости, только метод `render`:
+
+``` typescript
+render() {
+        return (
+            <div>
+                <div className="form-group">
+                    <label>
+                        Enter text to display in popup:
+                    </label>
+                    <input className="form-control"
+                        value={ this.state.text }
+                        onChange={ e => this.setText(e.target.value) }
+                        type="text" />
+                </div>
+                <p>
+                    <button className="btn btn-primary" onClick={e => this.openPopup() } type="button" >
+                        Open popup
+                    </button>
+                </p>
+
+                <Ifc condition={ () => this.state.isPopupVisible } >
+                    <Popup>
+                        <div className="alert alert-success">
+                            <h2>
+                                { this.state.text}
+                            </h2>
+                            <button className="btn btn-warning" onClick={e => this.closePopup() } type="button" >
+                                Close popup
+                            </button>
+                        </div>
+                    </Popup>
+                </Ifc>
+            </div>
+        )
+    }
+``` 
+
+`Ifc` это костылик, который рендерит содержимое, только если `condition` истинно.
+Это позволяет избавиться от монструозных IIFE, если нужно отрендерить кусок компонента по условию.
+
+В остальном все просто: если компонент `<Popup></Popup>` есть в виртуальном дереве - поп-ап окошко показывается,
+если нет - то прячется.
+При этом физически в DOM дереве оно находится в `body`.
+
+Как видим, очень похоже на второй способ с Angular 1.5, с директивой.
+
+## Итоги
+
+В принципе, поп-ап в Реакте можно сделать и императивным способом, похожим на способ Angular с `$compile`.
+Это может упростить некоторые сценарии и не создавать флаг в состоянии приложения для показа каждого алерта.
+Принцип тот же (используя `ReacDOM.render`), но только не в методах жизненного цикла компонента, а в методе `openPopup`.
+Это, конечно же, нарушает реактивность, но сделает код понятнее, увеличив связность.
+
+Недостатки приведенного способа - не будет работать в серверном рендеринге.
+
+
+# Заключение
+
+Подходы, изначально заложенные в Реакте - однонаправленные потоки данных, компоненты, четкий input/output контракт компонента - 
+нашли свое отражение и в Angular: by design в Angular 2, и в обновлениях Angular 1.5.   
