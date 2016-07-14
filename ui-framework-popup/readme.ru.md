@@ -2,7 +2,7 @@
 Реализуем создание и показ модального окна на каждом из фреймворков.
 
 Весь код в статье написан на typescript. 
-Исходный код примеров доступен [на github](https://github.com/rd-dev-ukraine/lore/tree/ui-framework-popup/ui-framework-popup)
+Исходный код примеров доступен [на github](https://github.com/rd-dev-ukraine/lore/tree/master/ui-framework-popup)
 
 # Введение 
 
