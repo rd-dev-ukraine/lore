@@ -1,0 +1,22 @@
+{
+  "name": "popup-react",
+  "version": "1.0.0",
+  "description": "Example of popup for Angular 1.5",
+  "dependencies": {
+    "angular": "^1.5.7"
+  },
+  "devDependencies": {
+    "ts-loader": "^0.8.2",
+    "typescript": "^1.8.10",
+    "typings": "^1.3.1",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1"
+  },
+  "private": true,
+  "scripts": {
+    "prepare": "npm install webpack typescript typings webpack-dev-server --global && npm install",
+    "server": "webpack-dev-server"
+  },
+  "author": "Sergey Tokarev",
+  "license": "ISC"
+}
